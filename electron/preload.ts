@@ -28,6 +28,14 @@ const api: TrackerApi = {
     active: () => ipcRenderer.invoke(IPC.sessionActive),
     start: (entryId) => ipcRenderer.invoke(IPC.sessionStart, entryId),
     stop: () => ipcRenderer.invoke(IPC.sessionStop)
+  },
+  settings: {
+    getAll: () => ipcRenderer.invoke(IPC.settingsGetAll),
+    set: (key, value) => ipcRenderer.invoke(IPC.settingsSet, key, value)
+  },
+  system: {
+    dbPath: () => ipcRenderer.invoke(IPC.dbPath),
+    openDbFolder: () => ipcRenderer.send(IPC.dbOpenFolder)
   }
 }
 

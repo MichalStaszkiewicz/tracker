@@ -1,5 +1,7 @@
 // Jedno źródło prawdy dla typów domenowych i DTO. Izomorficzne, czyste.
 
+export type Lang = 'pl' | 'en'
+
 // --- Definicja typu wpisu (ENTRY_TYPE) ---
 
 export type FieldType = 'text' | 'number' | 'bool' | 'select' | 'date' | 'url'

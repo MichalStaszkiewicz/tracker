@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron'
+import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
 import type { TaskFilter } from '@shared/types'
 import { listAreas } from '@core/repositories/areas'
@@ -6,7 +6,8 @@ import { listTypes } from '@core/repositories/types'
 import { listTags } from '@core/repositories/tags'
 import { listParentCandidates, listTasks, quickAdd, toggleDone } from '@core/repositories/entries'
 import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
-import { getDb } from '../db'
+import { getAllSettings, setSetting } from '@core/repositories/settings'
+import { getDb, getDbPaths } from '../db'
 
 /** Rejestruje handlery IPC — kanały 1:1 z kontraktem shared/ipc.ts. */
 export function registerIpc(): void {
@@ -20,6 +21,13 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.sessionActive, () => activeSession(getDb()))
   ipcMain.handle(IPC.sessionStart, (_e, entryId: number | null) => startSession(getDb(), entryId))
   ipcMain.handle(IPC.sessionStop, () => stopSession(getDb()))
+
+  ipcMain.handle(IPC.settingsGetAll, () => getAllSettings(getDb()))
+  ipcMain.handle(IPC.settingsSet, (_e, key: string, value: unknown) => setSetting(getDb(), key, value))
+  ipcMain.handle(IPC.dbPath, () => getDbPaths().dbPath)
+  ipcMain.on(IPC.dbOpenFolder, () => {
+    void shell.openPath(getDbPaths().dbDir)
+  })
 
   ipcMain.on(IPC.windowMinimize, (e) => BrowserWindow.fromWebContents(e.sender)?.minimize())
   ipcMain.on(IPC.windowMaximize, (e) => {

@@ -6,6 +6,7 @@ import { backupDbFile, runMigrations } from '@core/db/migrate'
 import { seed } from '@core/db/seed'
 
 let db: DB | null = null
+let paths: { dbPath: string; dbDir: string } | null = null
 
 /** Inicjalizuje bazę: backup pliku → migracje → seed. Wiring Electron ↔ core. */
 export function initDb(): DB {
@@ -14,6 +15,7 @@ export function initDb(): DB {
   mkdirSync(dbDir, { recursive: true })
 
   const dbPath = join(dbDir, dev ? 'dev.sqlite' : 'tracker.sqlite')
+  paths = { dbPath, dbDir }
   const migrationsFolder = dev
     ? join(process.cwd(), 'core', 'db', 'migrations')
     : join(process.resourcesPath, 'migrations')
@@ -30,4 +32,9 @@ export function initDb(): DB {
 export function getDb(): DB {
   if (!db) throw new Error('DB nie została zainicjalizowana')
   return db
+}
+
+export function getDbPaths(): { dbPath: string; dbDir: string } {
+  if (!paths) throw new Error('DB nie została zainicjalizowana')
+  return paths
 }

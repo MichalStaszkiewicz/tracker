@@ -27,7 +27,12 @@ export const IPC = {
 
   sessionActive: 'session:active',
   sessionStart: 'session:start',
-  sessionStop: 'session:stop'
+  sessionStop: 'session:stop',
+
+  settingsGetAll: 'settings:getAll',
+  settingsSet: 'settings:set',
+  dbPath: 'system:dbPath',
+  dbOpenFolder: 'system:openDbFolder'
 } as const
 
 // Powierzchnia dostępna w rendererze jako window.tracker.
@@ -58,6 +63,14 @@ export interface TrackerApi {
     active(): Promise<SessionActive | null>
     start(entryId: number | null): Promise<SessionActive>
     stop(): Promise<void>
+  }
+  settings: {
+    getAll(): Promise<Record<string, unknown>>
+    set(key: string, value: unknown): Promise<void>
+  }
+  system: {
+    dbPath(): Promise<string>
+    openDbFolder(): void
   }
 }
 
