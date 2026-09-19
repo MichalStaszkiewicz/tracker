@@ -45,6 +45,19 @@ body {
 button { font-family: var(--font-body); }
 ::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 
+/* Cienki, wyciszony pasek scrolla (Nocturne) */
+* { scrollbar-width: thin; scrollbar-color: var(--color-neutral-700) transparent; }
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-700);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-neutral-600); background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
 @keyframes caret { 0%, 45% { opacity: 1 } 55%, 100% { opacity: 0 } }
 @keyframes breathe { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
 
