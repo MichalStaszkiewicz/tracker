@@ -3,6 +3,7 @@
 
 import type {
   Area,
+  BoardView,
   EntryType,
   ParentCandidate,
   SessionActive,
@@ -22,8 +23,11 @@ export const IPC = {
   entryParents: 'entry:parents',
 
   tasksList: 'tasks:list',
+  boardTypes: 'board:types',
+  boardView: 'board:view',
   entryToggleDone: 'entry:toggleDone',
   entryQuickAdd: 'entry:quickAdd',
+  entrySetStage: 'entry:setStage',
 
   sessionActive: 'session:active',
   sessionStart: 'session:start',
@@ -55,10 +59,15 @@ export interface TrackerApi {
   tasks: {
     list(filter: TaskFilter): Promise<TaskListItem[]>
   }
+  board: {
+    types(): Promise<EntryType[]>
+    view(typeId: number): Promise<BoardView>
+  }
   entries: {
     toggleDone(id: number): Promise<TaskListItem>
     quickAdd(line: string): Promise<number>
     parents(): Promise<ParentCandidate[]>
+    setStage(id: number, stageId: number): Promise<TaskListItem>
   }
   sessions: {
     active(): Promise<SessionActive | null>

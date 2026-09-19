@@ -22,3 +22,8 @@ export function listTypes(db: DB): EntryType[] {
       position: t.position
     }))
 }
+
+/** Typy z własną tablicą (show_on_board). */
+export function listBoardTypes(db: DB): EntryType[] {
+  return listTypes(db).filter((t) => t.showOnBoard)
+}

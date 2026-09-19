@@ -1,9 +1,18 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, asc, eq, isNull } from 'drizzle-orm'
 import type { DB } from '../db/connection'
 import { areas, entries, entryTags, entryTypes, sessions, stages, tags } from '../db/schema'
 import { parseQuickAdd } from '@shared/quick-add-parser'
 import { isDoneToday, taskStatus } from '@shared/task-status'
-import type { Area, ParentCandidate, Tag, TaskFilter, TaskListItem, TaskStatus } from '@shared/types'
+import type {
+  Area,
+  BoardView,
+  ParentCandidate,
+  Stage,
+  Tag,
+  TaskFilter,
+  TaskListItem,
+  TaskStatus
+} from '@shared/types'
 
 interface BuiltItem {
   item: TaskListItem
@@ -194,6 +203,37 @@ export function listParentCandidates(db: DB): ParentCandidate[] {
       ]
     })
     .sort((a, b) => a.title.localeCompare(b.title))
+}
+
+/** Widok tablicy: etapy danego typu + wszystkie wpisy tego typu (z kontenerami). */
+export function listBoard(db: DB, typeId: number): BoardView {
+  const type = db.select().from(entryTypes).where(eq(entryTypes.id, typeId)).get()
+  if (!type) throw new Error(`Typ ${typeId} nie istnieje`)
+  const stageRows: Stage[] = db
+    .select()
+    .from(stages)
+    .where(eq(stages.typeId, typeId))
+    .orderBy(asc(stages.position))
+    .all()
+  const cards = [...buildItems(db).values()].map((b) => b.item).filter((it) => it.type.key === type.key)
+  return { stages: stageRows, cards }
+}
+
+/** Ustawia etap wpisu; etap końcowy ustawia completedAt, inny go czyści. */
+export function setStage(db: DB, entryId: number, stageId: number, now: Date = new Date()): TaskListItem {
+  const stage = db.select().from(stages).where(eq(stages.id, stageId)).get()
+  if (!stage) throw new Error(`Etap ${stageId} nie istnieje`)
+  db.update(entries)
+    .set({
+      stageId,
+      completedAt: stage.isDone ? nowIso(now) : null,
+      updatedAt: nowIso(now)
+    })
+    .where(eq(entries.id, entryId))
+    .run()
+  const updated = getTask(db, entryId)
+  if (!updated) throw new Error(`Wpis ${entryId} zniknął po aktualizacji`)
+  return updated
 }
 
 /** Odhaczenie / cofnięcie: przełącza między etapem końcowym a pierwszym. */

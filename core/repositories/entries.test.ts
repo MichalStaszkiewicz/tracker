@@ -2,7 +2,16 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Connection } from '../db/connection'
 import { makeTestDb } from '../db/test-utils'
 import { seed } from '../db/seed'
-import { getTask, listParentCandidates, listTasks, quickAdd, toggleDone } from './entries'
+import {
+  getTask,
+  listBoard,
+  listParentCandidates,
+  listTasks,
+  quickAdd,
+  setStage,
+  toggleDone
+} from './entries'
+import { listTypes } from './types'
 // getTask nie potrzebuje `now` — buduje bieżący stan.
 
 const NOW = new Date(2026, 8, 18, 14, 0, 0) // pt 2026-09-18
@@ -81,6 +90,24 @@ describe('listParentCandidates', () => {
     expect(titles).toContain('Parser PE w C++')
     expect(titles).toContain('pwn.college: Program Security')
     expect(titles).not.toContain('Przeczytać RFC 793, sekcja 3.4')
+  })
+})
+
+describe('listBoard / setStage', () => {
+  const typeId = (key: string) => listTypes(conn.db).find((t) => t.key === key)!.id
+
+  it('grupuje wpisy typu z etapami (kontenery są kartami)', () => {
+    const board = listBoard(conn.db, typeId('project'))
+    expect(board.stages.map((s) => s.name)).toContain('Implementacja')
+    expect(board.cards.map((c) => c.title)).toContain('Parser PE w C++')
+  })
+
+  it('setStage na etap końcowy ustawia completedAt', () => {
+    const bh = listTasks(conn.db, 'active', NOW).find((i) => i.title === 'babyheap level 3')!
+    const doneStage = listBoard(conn.db, typeId('pwn')).stages.find((s) => s.isDone)!
+    const updated = setStage(conn.db, bh.id, doneStage.id, NOW)
+    expect(updated.completedAt).not.toBeNull()
+    expect(updated.stage?.isDone).toBe(true)
   })
 })
 

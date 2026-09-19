@@ -19,10 +19,15 @@ const api: TrackerApi = {
   tasks: {
     list: (filter) => ipcRenderer.invoke(IPC.tasksList, filter)
   },
+  board: {
+    types: () => ipcRenderer.invoke(IPC.boardTypes),
+    view: (typeId) => ipcRenderer.invoke(IPC.boardView, typeId)
+  },
   entries: {
     toggleDone: (id) => ipcRenderer.invoke(IPC.entryToggleDone, id),
     quickAdd: (line) => ipcRenderer.invoke(IPC.entryQuickAdd, line),
-    parents: () => ipcRenderer.invoke(IPC.entryParents)
+    parents: () => ipcRenderer.invoke(IPC.entryParents),
+    setStage: (id, stageId) => ipcRenderer.invoke(IPC.entrySetStage, id, stageId)
   },
   sessions: {
     active: () => ipcRenderer.invoke(IPC.sessionActive),

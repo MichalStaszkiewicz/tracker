@@ -88,6 +88,11 @@ export interface ParentCandidate {
 
 // --- DTO ekranu Zadania ---
 
+export interface BoardView {
+  stages: Stage[]
+  cards: TaskListItem[]
+}
+
 export type TaskFilter = 'active' | 'today' | 'blocked' | 'done'
 export type TaskStatus = 'in_progress' | 'todo' | 'done'
 

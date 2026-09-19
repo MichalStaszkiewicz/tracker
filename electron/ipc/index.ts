@@ -2,9 +2,16 @@ import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
 import type { TaskFilter } from '@shared/types'
 import { listAreas } from '@core/repositories/areas'
-import { listTypes } from '@core/repositories/types'
+import { listBoardTypes, listTypes } from '@core/repositories/types'
 import { listTags } from '@core/repositories/tags'
-import { listParentCandidates, listTasks, quickAdd, toggleDone } from '@core/repositories/entries'
+import {
+  listBoard,
+  listParentCandidates,
+  listTasks,
+  quickAdd,
+  setStage,
+  toggleDone
+} from '@core/repositories/entries'
 import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
 import { getAllSettings, setSetting } from '@core/repositories/settings'
 import { getDb, getDbPaths } from '../db'
@@ -16,8 +23,11 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.tagsList, () => listTags(getDb()))
   ipcMain.handle(IPC.entryParents, () => listParentCandidates(getDb()))
   ipcMain.handle(IPC.tasksList, (_e, filter: TaskFilter) => listTasks(getDb(), filter))
+  ipcMain.handle(IPC.boardTypes, () => listBoardTypes(getDb()))
+  ipcMain.handle(IPC.boardView, (_e, typeId: number) => listBoard(getDb(), typeId))
   ipcMain.handle(IPC.entryToggleDone, (_e, id: number) => toggleDone(getDb(), id))
   ipcMain.handle(IPC.entryQuickAdd, (_e, line: string) => quickAdd(getDb(), line))
+  ipcMain.handle(IPC.entrySetStage, (_e, id: number, stageId: number) => setStage(getDb(), id, stageId))
   ipcMain.handle(IPC.sessionActive, () => activeSession(getDb()))
   ipcMain.handle(IPC.sessionStart, (_e, entryId: number | null) => startSession(getDb(), entryId))
   ipcMain.handle(IPC.sessionStop, () => stopSession(getDb()))
