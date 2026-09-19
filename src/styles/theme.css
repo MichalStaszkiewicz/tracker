@@ -158,11 +158,44 @@ button { font-family: var(--font-body); }
 .progress__fill { display: block; height: 100%; background: var(--color-accent); }
 .progress__label { font: 500 10.5px var(--mono); color: var(--color-neutral-400); }
 
-/* --- Inline add --- */
-.addrow { display: flex; align-items: center; gap: 13px; padding: 12px 15px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--color-neutral-900); }
-.addrow input { flex: 1; border: 0; background: transparent; outline: none; color: var(--color-text); font: 400 13.5px var(--font-body); }
-.addrow input::placeholder { color: var(--color-neutral-500); }
-.addrow__hint { margin-left: auto; font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
+/* --- Quick add --- */
+.quickadd { position: relative; flex: none; margin-top: 4px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--color-neutral-900); }
+.quickadd:focus-within { box-shadow: inset 0 0 0 1px var(--color-accent-800); }
+.quickadd__row { display: flex; align-items: center; gap: 13px; padding: 12px 15px; }
+.quickadd__input { flex: 1; border: 0; background: transparent; outline: none; color: var(--color-text); font: 400 13.5px var(--font-body); }
+.quickadd__input::placeholder { color: var(--color-neutral-500); }
+.quickadd__hint { font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
+.quickadd__chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 15px 12px; }
+.qchip { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 6px; background: var(--color-neutral-900); font-size: 12px; color: var(--color-neutral-200); }
+.qchip--skill { background: var(--color-accent-900); color: var(--color-accent-200); }
+.qchip--bad { background: transparent; color: var(--r-bad); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--r-bad) 40%, transparent); }
+.qchip__group { font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
+.qchip--skill .qchip__group { color: var(--color-accent-400); }
+
+/* suggestions (open upward) */
+.sug { position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 40; border-radius: 12px; background: var(--color-surface); box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-neutral-800); padding: 6px; display: flex; flex-direction: column; gap: 1px; max-height: 280px; overflow-y: auto; }
+.sug__head { font: 400 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500); padding: 6px 10px 4px; }
+.sug__item { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border: 0; background: transparent; border-radius: 8px; color: var(--color-neutral-300); font: 400 13px var(--font-body); cursor: pointer; text-align: left; width: 100%; }
+.sug__item--active { background: color-mix(in srgb, var(--color-accent) 12%, transparent); color: var(--color-accent-100); }
+.sug__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sug__hint { font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
+
+/* --- Menu (dropdown) --- */
+.menu { position: relative; }
+.menu__pop { position: absolute; top: calc(100% + 4px); min-width: 190px; z-index: 40; border-radius: 10px; background: var(--color-surface); box-shadow: 0 20px 40px -16px #000, inset 0 0 0 1px var(--color-neutral-800); padding: 5px; display: flex; flex-direction: column; gap: 1px; max-height: 340px; overflow-y: auto; }
+.menu__pop--left { left: 0; }
+.menu__pop--right { right: 0; }
+.menu__item { display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 10px; border: 0; background: transparent; border-radius: 7px; color: var(--color-neutral-300); font: 400 12.5px var(--font-body); cursor: pointer; text-align: left; width: 100%; }
+.menu__item:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); color: var(--color-text); }
+.menu__item--active { color: var(--color-accent-100); }
+.menu__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* --- Filter bar extras --- */
+.filterbar__spacer { margin-left: auto; }
+.filterbar__grouplabel { font: 400 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-neutral-500); }
+.filterbar__searchbox { display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px; border-radius: 7px; box-shadow: inset 0 0 0 1px var(--color-neutral-800); color: var(--color-neutral-500); }
+.filterbar__searchbox input { border: 0; background: transparent; outline: none; color: var(--color-text); font: 400 12px var(--font-body); width: 108px; }
+.filterbar__searchbox input::placeholder { color: var(--color-neutral-500); }
 
 /* --- Session widget --- */
 .session { position: absolute; right: 22px; bottom: 22px; width: 236px; border-radius: 12px; background: var(--color-surface); box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-accent-800); overflow: hidden; }

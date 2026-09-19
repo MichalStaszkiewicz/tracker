@@ -2,31 +2,39 @@ import { useMemo, useState } from 'react'
 import { api } from '@/api'
 import { FilterBar } from '@/components/FilterBar'
 import { Icon } from '@/components/Icon'
+import { QuickAdd } from '@/components/QuickAdd'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { SectionHeader } from '@/components/SectionHeader'
 import { SessionWidget } from '@/components/SessionWidget'
 import { TaskCard } from '@/components/TaskCard'
 import { useActiveSession } from '@/hooks/useActiveSession'
+import { useTags, useTypes } from '@/hooks/useLookups'
 import { useTasks } from '@/hooks/useTasks'
 import { useT } from '@/i18n'
+import { filterTasks, groupTasks, type GroupBy } from '@/lib/task-view'
 import { taskStatus } from '@shared/task-status'
-import type { TaskFilter, TaskListItem, TaskStatus } from '@shared/types'
-
-const ORDER: TaskStatus[] = ['in_progress', 'todo', 'done']
+import type { TaskFilter } from '@shared/types'
 
 export function Tasks() {
   const { t, lang } = useT()
   const [filter, setFilter] = useState<TaskFilter>('active')
+  const [typeKey, setTypeKey] = useState<string | undefined>()
+  const [tagId, setTagId] = useState<number | undefined>()
+  const [query, setQuery] = useState('')
+  const [groupBy, setGroupBy] = useState<GroupBy>('status')
+
   const { tasks, refetch } = useTasks(filter)
+  const types = useTypes()
+  const { tags, reload: reloadTags } = useTags()
   const session = useActiveSession()
 
-  const groups = useMemo(() => {
-    const g: Record<TaskStatus, TaskListItem[]> = { in_progress: [], todo: [], done: [] }
-    for (const item of tasks) g[taskStatus(item)].push(item)
-    return g
-  }, [tasks])
+  const filtered = useMemo(
+    () => filterTasks(tasks, { typeKey, tagId, query }),
+    [tasks, typeKey, tagId, query]
+  )
+  const groups = useMemo(() => groupTasks(filtered, groupBy), [filtered, groupBy])
+  const activeCount = filtered.filter((it) => taskStatus(it) !== 'done').length
 
-  const activeCount = groups.in_progress.length + groups.todo.length
   const dateLabel = new Intl.DateTimeFormat(lang === 'pl' ? 'pl-PL' : 'en-US', {
     day: 'numeric',
     month: 'long'
@@ -39,7 +47,7 @@ export function Tasks() {
 
   const add = async (line: string) => {
     await api.entries.quickAdd(line)
-    await refetch()
+    await Promise.all([refetch(), reloadTags()])
   }
 
   const activeTask = tasks.find((it) => it.id === session.active?.entryId) ?? null
@@ -56,7 +64,7 @@ export function Tasks() {
               {t('tasks.session')}
               <span className="btn__kbd">⌃T</span>
             </button>
-            <button className="btn btn--accent">
+            <button className="btn btn--accent" onClick={() => inputFocus()}>
               <Icon name="plus" size={13} />
               {t('tasks.add')}
               <span className="btn__kbd">⌃⇧␣</span>
@@ -65,22 +73,33 @@ export function Tasks() {
         }
       />
 
-      <FilterBar active={filter} onChange={setFilter} />
+      <FilterBar
+        filter={filter}
+        onFilter={setFilter}
+        types={types}
+        tags={tags}
+        typeKey={typeKey}
+        tagId={tagId}
+        query={query}
+        groupBy={groupBy}
+        onTypeKey={setTypeKey}
+        onTagId={setTagId}
+        onQuery={setQuery}
+        onGroupBy={setGroupBy}
+      />
 
       <div className="list">
-        {ORDER.map((status, i) =>
-          groups[status].length === 0 ? null : (
-            <div key={status} style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              <SectionHeader status={status} count={groups[status].length} gap={i > 0} />
-              {groups[status].map((item) => (
-                <TaskCard key={item.id} item={item} onToggle={toggle} />
-              ))}
-            </div>
-          )
-        )}
-
-        <InlineAdd onAdd={add} />
+        {groups.map((g, i) => (
+          <div key={g.key} style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <SectionHeader status={g.status} label={g.label ?? undefined} count={g.items.length} gap={i > 0} />
+            {g.items.map((item) => (
+              <TaskCard key={item.id} item={item} onToggle={toggle} />
+            ))}
+          </div>
+        ))}
       </div>
+
+      <QuickAdd onSubmit={add} />
 
       <SessionWidget
         active={session.active}
@@ -93,29 +112,6 @@ export function Tasks() {
   )
 }
 
-function InlineAdd({ onAdd }: { onAdd: (line: string) => void }) {
-  const { t } = useT()
-  const [value, setValue] = useState('')
-
-  const submit = () => {
-    const line = value.trim()
-    if (!line) return
-    onAdd(line)
-    setValue('')
-  }
-
-  return (
-    <div className="addrow">
-      <Icon name="plus" size={14} />
-      <input
-        value={value}
-        placeholder={t('add.placeholder')}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') submit()
-        }}
-      />
-      <span className="addrow__hint">{t('add.hint')}</span>
-    </div>
-  )
+function inputFocus() {
+  document.querySelector<HTMLInputElement>('.quickadd__input')?.focus()
 }

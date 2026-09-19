@@ -9,17 +9,20 @@ const DOT: Record<TaskStatus, { background?: string; boxShadow?: string }> = {
 }
 
 interface Props {
-  status: TaskStatus
   count: number
   gap?: boolean
+  status?: TaskStatus
+  label?: string
 }
 
-export function SectionHeader({ status, count, gap }: Props) {
+export function SectionHeader({ count, gap, status, label }: Props) {
   const { t } = useT()
+  const dot = status ? DOT[status] : { boxShadow: 'inset 0 0 0 1px var(--color-neutral-600)' }
+  const text = status ? t(`status.${status}` as StringKey) : label ?? ''
   return (
     <div className={`section${gap ? ' section--gap' : ''}`}>
-      <span className="section__dot" style={DOT[status]} />
-      <span className="section__label">{t(`status.${status}` as StringKey)}</span>
+      <span className="section__dot" style={dot} />
+      <span className="section__label">{text}</span>
       <span className="section__count">{count}</span>
     </div>
   )
