@@ -30,6 +30,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
   const [tab, setTab] = useState<Tab>('details')
   const [newLink, setNewLink] = useState({ kind: 'url', label: '', target: '' })
   const [tagInput, setTagInput] = useState('')
+  const [notesSaved, setNotesSaved] = useState(false)
 
   if (!detail) {
     return (
@@ -47,6 +48,10 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
   const commit = async (patch: Parameters<typeof api.entries.update>[1]) => {
     await api.entries.update(id, patch)
     await refetch()
+  }
+  const saveNotes = async (value: string) => {
+    await commit({ descriptionMd: value })
+    setNotesSaved(true)
   }
   const changeStage = async (stageId: number) => {
     await api.entries.setStage(id, stageId)
@@ -215,12 +220,31 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
         )}
 
         {tab === 'notes' && (
-          <textarea
-            className="pinput pinput--area detail__notes"
-            defaultValue={detail.descriptionMd}
-            placeholder={t('detail.notesPlaceholder')}
-            onBlur={(e) => void commit({ descriptionMd: e.currentTarget.value })}
-          />
+          <div className="detail__noteswrap">
+            <textarea
+              className="pinput pinput--area detail__notes"
+              defaultValue={detail.descriptionMd}
+              placeholder={t('detail.notesPlaceholder')}
+              onChange={() => setNotesSaved(false)}
+              onBlur={(e) => void saveNotes(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                  e.preventDefault()
+                  void saveNotes(e.currentTarget.value)
+                }
+              }}
+            />
+            <div className={`detail__savehint${notesSaved ? ' detail__savehint--saved' : ''}`}>
+              {notesSaved ? (
+                <>
+                  <Icon name="check" size={12} />
+                  {t('detail.saved')}
+                </>
+              ) : (
+                t('detail.autosaveHint')
+              )}
+            </div>
+          </div>
         )}
 
         {tab === 'links' && (
