@@ -27,7 +27,14 @@ const api: TrackerApi = {
     toggleDone: (id) => ipcRenderer.invoke(IPC.entryToggleDone, id),
     quickAdd: (line, ctx) => ipcRenderer.invoke(IPC.entryQuickAdd, line, ctx),
     parents: () => ipcRenderer.invoke(IPC.entryParents),
-    setStage: (id, stageId) => ipcRenderer.invoke(IPC.entrySetStage, id, stageId)
+    setStage: (id, stageId) => ipcRenderer.invoke(IPC.entrySetStage, id, stageId),
+    detail: (id) => ipcRenderer.invoke(IPC.entryDetail, id),
+    update: (id, patch) => ipcRenderer.invoke(IPC.entryUpdate, id, patch),
+    addTag: (id, group, name) => ipcRenderer.invoke(IPC.entryAddTag, id, group, name),
+    removeTag: (id, tagId) => ipcRenderer.invoke(IPC.entryRemoveTag, id, tagId),
+    addLink: (id, kind, label, target) => ipcRenderer.invoke(IPC.linkAdd, id, kind, label, target),
+    updateLink: (linkId, patch) => ipcRenderer.invoke(IPC.linkUpdate, linkId, patch),
+    removeLink: (linkId) => ipcRenderer.invoke(IPC.linkRemove, linkId)
   },
   sessions: {
     active: () => ipcRenderer.invoke(IPC.sessionActive),
@@ -44,7 +51,8 @@ const api: TrackerApi = {
   system: {
     dbPath: () => ipcRenderer.invoke(IPC.dbPath),
     openDbFolder: () => ipcRenderer.send(IPC.dbOpenFolder),
-    openExternal: (url) => ipcRenderer.send(IPC.externalOpen, url)
+    openExternal: (url) => ipcRenderer.send(IPC.externalOpen, url),
+    openPath: (path) => ipcRenderer.send(IPC.openPath, path)
   }
 }
 

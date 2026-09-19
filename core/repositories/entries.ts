@@ -1,11 +1,13 @@
 import { and, asc, eq, isNull } from 'drizzle-orm'
 import type { DB } from '../db/connection'
-import { areas, entries, entryTags, entryTypes, sessions, stages, tags } from '../db/schema'
+import { areas, entries, entryTags, entryTypes, links, sessions, stages, tags } from '../db/schema'
 import { parseQuickAdd } from '@shared/quick-add-parser'
 import { isDoneToday, taskStatus } from '@shared/task-status'
 import type {
   Area,
   BoardView,
+  EntryDetail,
+  EntryPatch,
   ParentCandidate,
   Stage,
   Tag,
@@ -13,6 +15,7 @@ import type {
   TaskListItem,
   TaskStatus
 } from '@shared/types'
+import { listTypes } from './types'
 
 interface BuiltItem {
   item: TaskListItem
@@ -203,6 +206,80 @@ export function listParentCandidates(db: DB): ParentCandidate[] {
       ]
     })
     .sort((a, b) => a.title.localeCompare(b.title))
+}
+
+/** Pełny wpis do widoku szczegółów: typ z polami, etapy, tagi, linki, czas, podzadania. */
+export function getEntryDetail(db: DB, id: number): EntryDetail | null {
+  const e = db.select().from(entries).where(eq(entries.id, id)).get()
+  if (!e || e.deletedAt != null) return null
+
+  const type = listTypes(db).find((t) => t.id === e.typeId)
+  if (!type) return null
+
+  const stageRows: Stage[] = db
+    .select()
+    .from(stages)
+    .where(eq(stages.typeId, e.typeId))
+    .orderBy(asc(stages.position))
+    .all()
+  const stage = e.stageId != null ? stageRows.find((s) => s.id === e.stageId) : undefined
+  const area =
+    e.areaId != null ? db.select().from(areas).where(eq(areas.id, e.areaId)).get() ?? null : null
+
+  const tagRows = db
+    .select({ tag: tags })
+    .from(entryTags)
+    .innerJoin(tags, eq(entryTags.tagId, tags.id))
+    .where(eq(entryTags.entryId, id))
+    .all()
+    .map((r) => r.tag)
+
+  const linkRows = db.select().from(links).where(eq(links.entryId, id)).all()
+
+  let secondsSpent = 0
+  for (const s of db.select().from(sessions).where(eq(sessions.entryId, id)).all()) {
+    if (s.endedAt != null) {
+      secondsSpent += Math.round(Math.max(0, (Date.parse(s.endedAt) - Date.parse(s.startedAt)) / 1000))
+    }
+  }
+
+  const children = [...buildItems(db).values()].filter((b) => b.parentId === id).map((b) => b.item)
+
+  return {
+    id: e.id,
+    type,
+    title: e.title,
+    descriptionMd: e.descriptionMd ?? '',
+    data: e.data,
+    area,
+    stage: stage ? { id: stage.id, name: stage.name, isDone: stage.isDone } : null,
+    stages: stageRows,
+    tags: tagRows,
+    links: linkRows,
+    priority: e.priority,
+    plannedDate: e.plannedDate,
+    dueDate: e.dueDate,
+    secondsSpent,
+    children
+  }
+}
+
+/** Częściowa aktualizacja wpisu (tytuł, opis, pola typu, obszar, daty, priorytet). */
+export function updateEntry(db: DB, id: number, patch: EntryPatch, now: Date = new Date()): EntryDetail {
+  const set = {
+    updatedAt: nowIso(now),
+    ...(patch.title !== undefined && { title: patch.title }),
+    ...(patch.descriptionMd !== undefined && { descriptionMd: patch.descriptionMd }),
+    ...(patch.data !== undefined && { data: patch.data }),
+    ...(patch.areaId !== undefined && { areaId: patch.areaId }),
+    ...(patch.priority !== undefined && { priority: patch.priority }),
+    ...(patch.plannedDate !== undefined && { plannedDate: patch.plannedDate }),
+    ...(patch.dueDate !== undefined && { dueDate: patch.dueDate })
+  }
+  db.update(entries).set(set).where(eq(entries.id, id)).run()
+  const detail = getEntryDetail(db, id)
+  if (!detail) throw new Error(`Wpis ${id} zniknął po aktualizacji`)
+  return detail
 }
 
 /** Widok tablicy: etapy danego typu + wszystkie wpisy tego typu (z kontenerami). */

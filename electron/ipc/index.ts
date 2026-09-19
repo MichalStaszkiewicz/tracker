@@ -1,16 +1,19 @@
 import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
-import type { StatsPeriod, TaskFilter } from '@shared/types'
+import type { EntryPatch, StatsPeriod, TaskFilter } from '@shared/types'
 import { listAreas } from '@core/repositories/areas'
 import { listBoardTypes, listTypes } from '@core/repositories/types'
-import { listTags } from '@core/repositories/tags'
+import { addTagToEntry, listTags, removeTagFromEntry } from '@core/repositories/tags'
+import { addLink, removeLink, updateLink } from '@core/repositories/links'
 import {
+  getEntryDetail,
   listBoard,
   listParentCandidates,
   listTasks,
   quickAdd,
   setStage,
-  toggleDone
+  toggleDone,
+  updateEntry
 } from '@core/repositories/entries'
 import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
 import { getStats } from '@core/repositories/stats'
@@ -31,6 +34,21 @@ export function registerIpc(): void {
     quickAdd(getDb(), line, new Date(), ctx)
   )
   ipcMain.handle(IPC.entrySetStage, (_e, id: number, stageId: number) => setStage(getDb(), id, stageId))
+  ipcMain.handle(IPC.entryDetail, (_e, id: number) => getEntryDetail(getDb(), id))
+  ipcMain.handle(IPC.entryUpdate, (_e, id: number, patch: EntryPatch) => updateEntry(getDb(), id, patch))
+  ipcMain.handle(IPC.entryAddTag, (_e, id: number, group: string, name: string) =>
+    addTagToEntry(getDb(), id, group, name)
+  )
+  ipcMain.handle(IPC.entryRemoveTag, (_e, id: number, tagId: number) => removeTagFromEntry(getDb(), id, tagId))
+  ipcMain.handle(IPC.linkAdd, (_e, id: number, kind: string, label: string, target: string) =>
+    addLink(getDb(), id, kind, label, target)
+  )
+  ipcMain.handle(
+    IPC.linkUpdate,
+    (_e, linkId: number, patch: { kind?: string; label?: string; target?: string }) =>
+      updateLink(getDb(), linkId, patch)
+  )
+  ipcMain.handle(IPC.linkRemove, (_e, linkId: number) => removeLink(getDb(), linkId))
   ipcMain.handle(IPC.sessionActive, () => activeSession(getDb()))
   ipcMain.handle(IPC.sessionStart, (_e, entryId: number | null) => startSession(getDb(), entryId))
   ipcMain.handle(IPC.sessionStop, () => stopSession(getDb()))
@@ -45,6 +63,9 @@ export function registerIpc(): void {
   })
   ipcMain.on(IPC.externalOpen, (_e, url: string) => {
     if (typeof url === 'string' && /^https?:\/\//i.test(url)) void shell.openExternal(url)
+  })
+  ipcMain.on(IPC.openPath, (_e, path: string) => {
+    if (typeof path === 'string' && path) void shell.openPath(path)
   })
 
   ipcMain.on(IPC.windowMinimize, (e) => BrowserWindow.fromWebContents(e.sender)?.minimize())

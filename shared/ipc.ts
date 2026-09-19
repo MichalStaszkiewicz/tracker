@@ -4,7 +4,10 @@
 import type {
   Area,
   BoardView,
+  EntryDetail,
+  EntryPatch,
   EntryType,
+  Link,
   ParentCandidate,
   SessionActive,
   StatsPeriod,
@@ -30,6 +33,13 @@ export const IPC = {
   entryToggleDone: 'entry:toggleDone',
   entryQuickAdd: 'entry:quickAdd',
   entrySetStage: 'entry:setStage',
+  entryDetail: 'entry:detail',
+  entryUpdate: 'entry:update',
+  entryAddTag: 'entry:addTag',
+  entryRemoveTag: 'entry:removeTag',
+  linkAdd: 'link:add',
+  linkUpdate: 'link:update',
+  linkRemove: 'link:remove',
 
   sessionActive: 'session:active',
   sessionStart: 'session:start',
@@ -41,7 +51,8 @@ export const IPC = {
   settingsSet: 'settings:set',
   dbPath: 'system:dbPath',
   dbOpenFolder: 'system:openDbFolder',
-  externalOpen: 'system:openExternal'
+  externalOpen: 'system:openExternal',
+  openPath: 'system:openPath'
 } as const
 
 // Powierzchnia dostępna w rendererze jako window.tracker.
@@ -72,6 +83,13 @@ export interface TrackerApi {
     quickAdd(line: string, ctx?: { areaId?: number | null }): Promise<number>
     parents(): Promise<ParentCandidate[]>
     setStage(id: number, stageId: number): Promise<TaskListItem>
+    detail(id: number): Promise<EntryDetail | null>
+    update(id: number, patch: EntryPatch): Promise<EntryDetail>
+    addTag(id: number, group: string, name: string): Promise<Tag>
+    removeTag(id: number, tagId: number): Promise<void>
+    addLink(id: number, kind: string, label: string, target: string): Promise<Link>
+    updateLink(linkId: number, patch: { kind?: string; label?: string; target?: string }): Promise<void>
+    removeLink(linkId: number): Promise<void>
   }
   sessions: {
     active(): Promise<SessionActive | null>
@@ -89,6 +107,7 @@ export interface TrackerApi {
     dbPath(): Promise<string>
     openDbFolder(): void
     openExternal(url: string): void
+    openPath(path: string): void
   }
 }
 

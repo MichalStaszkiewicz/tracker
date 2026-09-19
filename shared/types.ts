@@ -77,6 +77,43 @@ export interface SessionActive {
   startedAt: string // ISO
 }
 
+export interface Link {
+  id: number
+  entryId: number
+  kind: string // url | file | folder | repo
+  label: string
+  target: string
+}
+
+/** Pełny wpis do widoku szczegółów. */
+export interface EntryDetail {
+  id: number
+  type: EntryType
+  title: string
+  descriptionMd: string
+  data: Record<string, unknown>
+  area: Area | null
+  stage: { id: number; name: string; isDone: boolean } | null
+  stages: Stage[]
+  tags: Tag[]
+  links: Link[]
+  priority: number | null
+  plannedDate: string | null
+  dueDate: string | null
+  secondsSpent: number
+  children: TaskListItem[]
+}
+
+export interface EntryPatch {
+  title?: string
+  descriptionMd?: string | null
+  data?: Record<string, unknown>
+  areaId?: number | null
+  priority?: number | null
+  plannedDate?: string | null
+  dueDate?: string | null
+}
+
 /** Lekki kandydat na rodzica do podpowiedzi w szybkim dodawaniu. */
 export interface ParentCandidate {
   id: number
