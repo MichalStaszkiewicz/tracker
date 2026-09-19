@@ -3,6 +3,7 @@ import { api } from '@/api'
 import { Icon } from '@/components/Icon'
 import { Menu } from '@/components/Menu'
 import { TypeForm } from '@/components/TypeForm'
+import { useAreas } from '@/hooks/useAreas'
 import { useEntry } from '@/hooks/useEntry'
 import { useTypes } from '@/hooks/useLookups'
 import { useT } from '@/i18n'
@@ -25,6 +26,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
   const { t } = useT()
   const { detail, refetch } = useEntry(id)
   const types = useTypes()
+  const { areas } = useAreas()
   const [tab, setTab] = useState<Tab>('details')
   const [newLink, setNewLink] = useState({ kind: 'url', label: '', target: '' })
   const [tagInput, setTagInput] = useState('')
@@ -52,6 +54,11 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
   }
   const changeType = async (typeId: number) => {
     await api.entries.setType(id, typeId)
+    await refetch()
+  }
+  const changeArea = async (areaId: number | null) => {
+    // Klawiaturowa/klikalna alternatywa dla drag & drop (i jedyny sposób na wyczyszczenie obszaru).
+    await api.entries.update(id, { areaId })
     await refetch()
   }
   const addTag = async () => {
@@ -99,6 +106,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
           <Icon name="arrow-left" size={16} />
         </button>
         <Menu
+          ariaLabel={t('detail.changeType')}
           trigger={<Icon name={detail.type.icon} size={16} />}
           items={types.map((ty) => ({ key: String(ty.id), label: ty.name, icon: ty.icon }))}
           activeKey={String(detail.type.id)}
@@ -109,12 +117,26 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
           defaultValue={detail.title}
           onBlur={(e) => void commit({ title: e.currentTarget.value })}
         />
-        {detail.area && (
-          <span className="detail__area">
-            <span className="areadot" style={{ background: detail.area.color }} />
-            {detail.area.name}
-          </span>
-        )}
+        <Menu
+          align="right"
+          ariaLabel={t('area.change')}
+          trigger={
+            detail.area ? (
+              <>
+                <span className="areadot" style={{ background: detail.area.color }} />
+                {detail.area.name}
+              </>
+            ) : (
+              <span className="detail__areanone">{t('area.none')}</span>
+            )
+          }
+          items={[
+            { key: 'none', label: t('area.none') },
+            ...areas.map((a) => ({ key: String(a.id), label: a.name, dot: a.color }))
+          ]}
+          activeKey={detail.area ? String(detail.area.id) : 'none'}
+          onSelect={(k) => void changeArea(k === 'none' ? null : Number(k))}
+        />
         <button className="btn btn--outline" onClick={() => void api.sessions.start(id)}>
           <Icon name="timer" size={14} />
           {t('detail.session')}
