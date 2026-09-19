@@ -342,6 +342,45 @@ button { font-family: var(--font-body); }
 .palette__hint { font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
 .palette__empty { padding: 16px 12px; font-size: 12.5px; color: var(--color-neutral-500); }
 
+/* --- Offers table --- */
+.otable { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }
+.otable__head,
+.otable__row { display: grid; grid-template-columns: minmax(140px, 1.5fr) minmax(140px, 1.4fr) 92px 84px 104px 96px 58px; gap: 16px; align-items: center; padding: 0 6px; }
+.otable__head { padding-bottom: 10px; font: 400 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500); background: var(--hair) no-repeat bottom / 100% 1px; }
+.otable__row { height: 46px; border: 0; width: 100%; text-align: left; cursor: pointer; color: var(--color-text); background: var(--hair) no-repeat bottom / 100% 1px; }
+.otable__row:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.otable__company { font-size: 13.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.otable__pos { font-size: 13px; color: var(--color-neutral-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.otable__mono { font: 400 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--color-neutral-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.otable__dim { color: var(--color-neutral-500); }
+.otable__empty { padding: 24px 6px; font-size: 12.5px; color: var(--color-neutral-500); }
+
+/* --- Import modal --- */
+.importmodal { width: 560px; max-width: calc(100% - 48px); max-height: calc(100vh - 140px); display: flex; flex-direction: column; border-radius: 14px; background: var(--color-surface); box-shadow: 0 40px 80px -24px #000, inset 0 0 0 1px var(--color-neutral-700); overflow: hidden; }
+.importmodal__head { display: flex; align-items: center; gap: 11px; padding: 15px 18px; background: var(--hair) no-repeat bottom / 100% 1px; }
+.importmodal__title { font-size: 15px; font-weight: 500; }
+.importmodal__file { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 6px; background: var(--color-neutral-900); font: 400 11px var(--mono); color: var(--color-neutral-300); }
+.importmodal__filemeta { color: var(--color-neutral-500); }
+.importmodal__body { padding: 18px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; }
+.importmodal__drop { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 40px; border: 0; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--color-neutral-800); background: transparent; color: var(--color-neutral-400); font-size: 13px; cursor: pointer; }
+.importmodal__drop:hover { box-shadow: inset 0 0 0 1px var(--color-accent-700); color: var(--color-accent-200); }
+.importmodal__section { display: flex; flex-direction: column; gap: 10px; }
+.importmodal__label { font: 400 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500); }
+.importmodal__map { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+.maprow { display: flex; align-items: center; gap: 9px; font-size: 12.5px; }
+.maprow__src { font: 400 11px var(--mono); color: var(--color-neutral-400); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.importmodal__counts { display: flex; gap: 8px; flex-wrap: wrap; }
+.imp-chip { display: inline-flex; align-items: center; gap: 7px; height: 24px; padding: 0 10px; border-radius: 6px; background: var(--color-neutral-900); font: 400 11.5px var(--mono); color: var(--color-neutral-400); }
+.imp-chip--new { background: color-mix(in srgb, var(--r-good) 14%, transparent); color: var(--r-good); }
+.imp-chip--err { background: color-mix(in srgb, var(--r-bad) 14%, transparent); color: var(--r-bad); }
+.imp-sample { display: flex; flex-direction: column; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--color-neutral-800); overflow: hidden; }
+.imp-sample__row { display: grid; grid-template-columns: 1.4fr 1.2fr 84px; gap: 12px; padding: 7px 12px; font-size: 12px; background: var(--hair) no-repeat bottom / 100% 1px; }
+.imp-sample__pos { color: var(--color-neutral-300); }
+.imp-sample__sal { font: 400 11px var(--mono); color: var(--color-neutral-300); }
+.importmodal__foot { display: flex; align-items: center; gap: 10px; padding: 14px 18px; background: var(--hair) no-repeat top / 100% 1px; }
+.importmodal__dedup { font: 400 11px var(--mono); color: var(--color-neutral-500); margin-right: auto; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+
 /* --- Entry detail --- */
 .screen.detail { overflow-y: auto; gap: 16px; }
 .detail__head { display: flex; align-items: center; gap: 12px; }

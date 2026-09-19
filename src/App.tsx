@@ -12,6 +12,7 @@ import type { StringKey } from '@/i18n/strings'
 import type { Area } from '@shared/types'
 import { Board } from '@/screens/Board'
 import { EntryDetail } from '@/screens/EntryDetail'
+import { Offers } from '@/screens/Offers'
 import { Profile } from '@/screens/Profile'
 import { Settings } from '@/screens/Settings'
 import { Stats } from '@/screens/Stats'
@@ -84,6 +85,8 @@ export function App() {
       <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} onOpenEntry={setOpenEntryId} />
     ) : screen === 'board' ? (
       <Board onOpenEntry={setOpenEntryId} />
+    ) : screen === 'offers' ? (
+      <Offers onOpenEntry={setOpenEntryId} />
     ) : screen === 'stats' ? (
       <Stats />
     ) : screen === 'settings' ? (
