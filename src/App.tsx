@@ -8,6 +8,7 @@ import { useSettingsCtx } from '@/settings-context'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import type { Area } from '@shared/types'
+import { Board } from '@/screens/Board'
 import { Profile } from '@/screens/Profile'
 import { Settings } from '@/screens/Settings'
 import { Tasks } from '@/screens/Tasks'
@@ -52,6 +53,8 @@ export function App() {
     >
       {screen === 'tasks' ? (
         <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} />
+      ) : screen === 'board' ? (
+        <Board />
       ) : screen === 'settings' ? (
         <Settings />
       ) : screen === 'profile' ? (
