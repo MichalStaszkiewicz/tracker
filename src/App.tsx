@@ -2,13 +2,34 @@ import { useState } from 'react'
 import { AppShell } from '@/components/AppShell'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
+import { useHotkeys } from '@/hooks/useHotkeys'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import { Tasks } from '@/screens/Tasks'
 
+const SCREEN_BY_NUMBER: Record<string, NavKey> = {
+  'ctrl+1': 'tasks',
+  'ctrl+2': 'inbox',
+  'ctrl+3': 'board',
+  'ctrl+4': 'offers',
+  'ctrl+5': 'stats'
+}
+
 export function App() {
   const [screen, setScreen] = useState<NavKey>('tasks')
   const areas = useAreas()
+
+  useHotkeys({
+    ...Object.fromEntries(
+      Object.entries(SCREEN_BY_NUMBER).map(([combo, key]) => [combo, () => setScreen(key)])
+    ),
+    'ctrl+shift+space': () => {
+      setScreen('tasks')
+      requestAnimationFrame(() =>
+        document.querySelector<HTMLInputElement>('.quickadd__input')?.focus()
+      )
+    }
+  })
 
   return (
     <AppShell current={screen} onNavigate={setScreen} areas={areas}>

@@ -32,5 +32,18 @@ export function useActiveSession() {
     await refetch()
   }, [refetch])
 
-  return { active, elapsed, stop, refetch }
+  const start = useCallback(
+    async (entryId: number | null = null) => {
+      await api.sessions.start(entryId)
+      await refetch()
+    },
+    [refetch]
+  )
+
+  const toggle = useCallback(async () => {
+    if (active) await stop()
+    else await start(null)
+  }, [active, stop, start])
+
+  return { active, elapsed, stop, start, toggle, refetch }
 }

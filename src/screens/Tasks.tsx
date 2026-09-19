@@ -8,6 +8,7 @@ import { SectionHeader } from '@/components/SectionHeader'
 import { SessionWidget } from '@/components/SessionWidget'
 import { TaskCard } from '@/components/TaskCard'
 import { useActiveSession } from '@/hooks/useActiveSession'
+import { useHotkeys } from '@/hooks/useHotkeys'
 import { useTags, useTypes } from '@/hooks/useLookups'
 import { useTasks } from '@/hooks/useTasks'
 import { useT } from '@/i18n'
@@ -27,6 +28,8 @@ export function Tasks() {
   const types = useTypes()
   const { tags, reload: reloadTags } = useTags()
   const session = useActiveSession()
+
+  useHotkeys({ 'ctrl+t': () => void session.toggle() })
 
   const filtered = useMemo(
     () => filterTasks(tasks, { typeKey, tagId, query }),
@@ -59,8 +62,11 @@ export function Tasks() {
         title={t('tasks.title')}
         actions={
           <>
-            <button className="btn">
-              <Icon name="timer" size={14} />
+            <button
+              className={`btn${session.active ? ' btn--accent' : ''}`}
+              onClick={() => void session.toggle()}
+            >
+              <Icon name={session.active ? 'pause' : 'timer'} size={14} />
               {t('tasks.session')}
               <span className="btn__kbd">⌃T</span>
             </button>
