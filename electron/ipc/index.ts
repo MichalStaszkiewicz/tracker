@@ -11,6 +11,7 @@ import {
   listParentCandidates,
   listTasks,
   quickAdd,
+  searchEntries,
   setStage,
   toggleDone,
   updateEntry
@@ -26,6 +27,7 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.typesList, () => listTypes(getDb()))
   ipcMain.handle(IPC.tagsList, () => listTags(getDb()))
   ipcMain.handle(IPC.entryParents, () => listParentCandidates(getDb()))
+  ipcMain.handle(IPC.entrySearch, (_e, q: string) => searchEntries(getDb(), q))
   ipcMain.handle(IPC.tasksList, (_e, filter: TaskFilter) => listTasks(getDb(), filter))
   ipcMain.handle(IPC.boardTypes, () => listBoardTypes(getDb()))
   ipcMain.handle(IPC.boardView, (_e, typeId: number) => listBoard(getDb(), typeId))

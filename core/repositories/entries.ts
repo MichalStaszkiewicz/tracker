@@ -8,6 +8,7 @@ import type {
   BoardView,
   EntryDetail,
   EntryPatch,
+  EntrySearchResult,
   ParentCandidate,
   Stage,
   Tag,
@@ -184,6 +185,30 @@ export function getTask(db: DB, id: number): TaskListItem | null {
  * (progressMode != 'none') — czyli projekty, kursy, crackme. Reguła strukturalna,
  * bez sprawdzania nazwy typu.
  */
+export function searchEntries(db: DB, q: string, limit = 20): EntrySearchResult[] {
+  const needle = q.trim().toLowerCase()
+  if (!needle) return []
+  const typeById = new Map(db.select().from(entryTypes).all().map((t) => [t.id, t]))
+  const areaById = new Map(db.select().from(areas).all().map((a) => [a.id, a]))
+  return db
+    .select()
+    .from(entries)
+    .where(isNull(entries.deletedAt))
+    .all()
+    .filter((e) => e.title.toLowerCase().includes(needle))
+    .slice(0, limit)
+    .map((e) => {
+      const type = typeById.get(e.typeId)
+      return {
+        id: e.id,
+        title: e.title,
+        icon: type?.icon ?? 'cube',
+        areaColor: e.areaId != null ? areaById.get(e.areaId)?.color ?? null : null,
+        subtitle: type?.name ?? ''
+      }
+    })
+}
+
 export function listParentCandidates(db: DB): ParentCandidate[] {
   const typeById = new Map(db.select().from(entryTypes).all().map((t) => [t.id, t]))
   const areaById = new Map(db.select().from(areas).all().map((a) => [a.id, a]))

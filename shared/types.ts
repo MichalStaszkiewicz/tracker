@@ -114,6 +114,15 @@ export interface EntryPatch {
   dueDate?: string | null
 }
 
+/** Wynik wyszukiwania w palecie poleceń. */
+export interface EntrySearchResult {
+  id: number
+  title: string
+  icon: string
+  areaColor: string | null
+  subtitle: string
+}
+
 /** Lekki kandydat na rodzica do podpowiedzi w szybkim dodawaniu. */
 export interface ParentCandidate {
   id: number

@@ -27,6 +27,7 @@ const api: TrackerApi = {
     toggleDone: (id) => ipcRenderer.invoke(IPC.entryToggleDone, id),
     quickAdd: (line, ctx) => ipcRenderer.invoke(IPC.entryQuickAdd, line, ctx),
     parents: () => ipcRenderer.invoke(IPC.entryParents),
+    search: (q) => ipcRenderer.invoke(IPC.entrySearch, q),
     setStage: (id, stageId) => ipcRenderer.invoke(IPC.entrySetStage, id, stageId),
     detail: (id) => ipcRenderer.invoke(IPC.entryDetail, id),
     update: (id, patch) => ipcRenderer.invoke(IPC.entryUpdate, id, patch),

@@ -8,6 +8,7 @@ import {
   listParentCandidates,
   listTasks,
   quickAdd,
+  searchEntries,
   setStage,
   toggleDone
 } from './entries'
@@ -82,6 +83,17 @@ describe('toggleDone', () => {
     const back = toggleDone(conn.db, before!.id, NOW)
     expect(back.completedAt).toBeNull()
     expect(back.stage?.isDone).toBe(false)
+  })
+})
+
+describe('searchEntries', () => {
+  it('puste query → pusto', () => {
+    expect(searchEntries(conn.db, '  ')).toEqual([])
+  })
+  it('znajduje po fragmencie tytułu', () => {
+    const r = searchEntries(conn.db, 'babyheap')
+    expect(r.some((x) => x.title === 'babyheap level 3')).toBe(true)
+    expect(r[0].icon).toBeTruthy()
   })
 })
 

@@ -6,6 +6,7 @@ import type {
   BoardView,
   EntryDetail,
   EntryPatch,
+  EntrySearchResult,
   EntryType,
   Link,
   ParentCandidate,
@@ -26,6 +27,7 @@ export const IPC = {
   typesList: 'types:list',
   tagsList: 'tags:list',
   entryParents: 'entry:parents',
+  entrySearch: 'entry:search',
 
   tasksList: 'tasks:list',
   boardTypes: 'board:types',
@@ -82,6 +84,7 @@ export interface TrackerApi {
     toggleDone(id: number): Promise<TaskListItem>
     quickAdd(line: string, ctx?: { areaId?: number | null }): Promise<number>
     parents(): Promise<ParentCandidate[]>
+    search(q: string): Promise<EntrySearchResult[]>
     setStage(id: number, stageId: number): Promise<TaskListItem>
     detail(id: number): Promise<EntryDetail | null>
     update(id: number, patch: EntryPatch): Promise<EntryDetail>
