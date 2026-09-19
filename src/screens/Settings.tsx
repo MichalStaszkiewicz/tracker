@@ -55,6 +55,7 @@ export function Settings() {
 
   const shortcutLabel = (action: ShortcutAction): string => {
     if (action === 'quickAdd') return t('sc.quickAdd')
+    if (action === 'addArea') return t('pal.addArea')
     if (action === 'session') return t('sc.session')
     return `${t('sc.goto')} ${t(SCREEN_NAV[action])}`
   }

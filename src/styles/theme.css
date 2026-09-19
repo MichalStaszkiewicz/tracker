@@ -198,6 +198,7 @@ button { font-family: var(--font-body); }
 .sidebar__addarea { margin-left: auto; margin-right: 6px; width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--color-neutral-500); cursor: pointer; }
 .sidebar__addarea:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
 .areapop { position: absolute; left: 8px; right: 8px; top: calc(100% + 4px); z-index: 50; border-radius: 12px; background: var(--color-surface); box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-neutral-700); padding: 13px; display: flex; flex-direction: column; gap: 14px; }
+.areapop--modal { position: static; left: auto; right: auto; top: auto; width: 320px; max-width: calc(100% - 48px); padding: 16px; }
 .areapop__head { display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 500; color: var(--color-accent-200); }
 .areapop__field { display: flex; flex-direction: column; gap: 8px; }
 .areapop__label { font: 400 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500); }

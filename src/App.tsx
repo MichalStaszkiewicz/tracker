@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '@/api'
 import { AppShell } from '@/components/AppShell'
+import { AreaPopover } from '@/components/AreaPopover'
 import { CommandPalette, type PaletteAction } from '@/components/CommandPalette'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
@@ -24,6 +25,7 @@ export function App() {
   const [taskArea, setTaskArea] = useState<{ id: number; name: string } | null>(null)
   const [openEntryId, setOpenEntryId] = useState<number | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [addAreaOpen, setAddAreaOpen] = useState(false)
   const { areas, reload: reloadAreas } = useAreas()
   const { shortcuts } = useSettingsCtx()
 
@@ -54,6 +56,7 @@ export function App() {
     [shortcuts['screen.offers']]: () => navigate('offers'),
     [shortcuts['screen.stats']]: () => navigate('stats'),
     [shortcuts.quickAdd]: focusAdd,
+    [shortcuts.addArea]: () => setAddAreaOpen(true),
     'ctrl+arrowup': focusAdd
   })
 
@@ -76,7 +79,8 @@ export function App() {
       label: t(`nav.${k}` as StringKey),
       run: () => navigate(k)
     })),
-    { id: 'add', icon: 'plus', label: t('tasks.add'), run: focusAdd },
+    { id: 'add', icon: 'plus', label: t('pal.addTask'), run: focusAdd },
+    { id: 'addArea', icon: 'plus', label: t('pal.addArea'), run: () => setAddAreaOpen(true) },
     { id: 'session.start', icon: 'timer', label: t('pal.startSession'), run: () => void api.sessions.start(null) },
     { id: 'session.stop', icon: 'pause', label: t('pal.stopSession'), run: () => void api.sessions.stop() }
   ]
@@ -104,7 +108,7 @@ export function App() {
         areas={areas}
         activeAreaId={screen === 'tasks' && openEntryId === null ? taskArea?.id ?? null : null}
         onAreaSelect={selectArea}
-        onCreateArea={createArea}
+        onAddArea={() => setAddAreaOpen(true)}
         onOpenPalette={() => setPaletteOpen(true)}
       >
         {content}
@@ -116,6 +120,7 @@ export function App() {
           onOpenEntry={setOpenEntryId}
         />
       )}
+      {addAreaOpen && <AreaPopover onCreate={createArea} onClose={() => setAddAreaOpen(false)} />}
     </>
   )
 }

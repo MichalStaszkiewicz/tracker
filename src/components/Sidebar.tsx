@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import type { Area } from '@shared/types'
-import { AreaPopover } from './AreaPopover'
 import { Icon } from './Icon'
 
 export type NavKey = 'tasks' | 'inbox' | 'board' | 'offers' | 'stats' | 'profile' | 'settings'
@@ -34,12 +32,11 @@ interface Props {
   areas: Area[]
   activeAreaId?: number | null
   onAreaSelect: (area: Area) => void
-  onCreateArea: (name: string, color: string) => void
+  onAddArea: () => void
 }
 
-export function Sidebar({ current, onNavigate, areas, activeAreaId, onAreaSelect, onCreateArea }: Props) {
+export function Sidebar({ current, onNavigate, areas, activeAreaId, onAreaSelect, onAddArea }: Props) {
   const { t } = useT()
-  const [showAdd, setShowAdd] = useState(false)
 
   const item = (def: NavDef) => (
     <button
@@ -61,10 +58,9 @@ export function Sidebar({ current, onNavigate, areas, activeAreaId, onAreaSelect
       <div className="sidebar__sep" />
       <div className="sidebar__areahead">
         <span className="sidebar__label">{t('nav.areas')}</span>
-        <button className="sidebar__addarea" aria-label={t('area.new')} onClick={() => setShowAdd(true)}>
+        <button className="sidebar__addarea" aria-label={t('area.new')} onClick={onAddArea}>
           <Icon name="plus" size={12} />
         </button>
-        {showAdd && <AreaPopover onCreate={onCreateArea} onClose={() => setShowAdd(false)} />}
       </div>
       {areas.map((a) => (
         <button

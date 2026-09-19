@@ -2,6 +2,7 @@
 
 export type ShortcutAction =
   | 'quickAdd'
+  | 'addArea'
   | 'session'
   | 'screen.tasks'
   | 'screen.offers'
@@ -10,6 +11,7 @@ export type ShortcutAction =
 
 export const DEFAULT_SHORTCUTS: Record<ShortcutAction, string> = {
   quickAdd: 'ctrl+shift+space',
+  addArea: 'ctrl+shift+a',
   session: 'ctrl+t',
   'screen.tasks': 'ctrl+1',
   'screen.offers': 'ctrl+2',
