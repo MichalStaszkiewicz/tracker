@@ -1,6 +1,6 @@
 {
   "name": "tracker",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Tracker nauki, projektów i ofert — aplikacja desktopowa (Electron + React + SQLite)",
   "author": "Marek K.",
@@ -13,7 +13,39 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "rebuild": "electron-rebuild -f -w better-sqlite3"
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "release": "electron-vite build && electron-builder --win",
+    "release:dir": "electron-vite build && electron-builder --win --dir"
+  },
+  "build": {
+    "appId": "dev.tracker.app",
+    "productName": "Tracker",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "extraResources": [
+      {
+        "from": "core/db/migrations",
+        "to": "migrations"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

@@ -1,5 +1,6 @@
 node_modules/
 out/
+release/
 .claude/
 dist/
 dist-electron/
