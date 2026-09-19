@@ -93,6 +93,19 @@ export interface BoardView {
   cards: TaskListItem[]
 }
 
+export type StatsPeriod = 'week' | 'month' | 'year'
+
+export interface StatsView {
+  streakDays: number
+  periodMinutes: number
+  sessionCount: number
+  avgSessionMinutes: number
+  todayMinutes: number
+  heatmap: { date: string; minutes: number }[]
+  areaTime: { areaId: number | null; name: string; color: string | null; minutes: number }[]
+  thresholdMinutes: number
+}
+
 export type TaskFilter = 'active' | 'today' | 'blocked' | 'done'
 export type TaskStatus = 'in_progress' | 'todo' | 'done'
 

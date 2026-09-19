@@ -7,6 +7,8 @@ import type {
   EntryType,
   ParentCandidate,
   SessionActive,
+  StatsPeriod,
+  StatsView,
   Tag,
   TaskFilter,
   TaskListItem
@@ -32,6 +34,8 @@ export const IPC = {
   sessionActive: 'session:active',
   sessionStart: 'session:start',
   sessionStop: 'session:stop',
+
+  statsGet: 'stats:get',
 
   settingsGetAll: 'settings:getAll',
   settingsSet: 'settings:set',
@@ -73,6 +77,9 @@ export interface TrackerApi {
     active(): Promise<SessionActive | null>
     start(entryId: number | null): Promise<SessionActive>
     stop(): Promise<void>
+  }
+  stats: {
+    get(period: StatsPeriod): Promise<StatsView>
   }
   settings: {
     getAll(): Promise<Record<string, unknown>>

@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
-import type { TaskFilter } from '@shared/types'
+import type { StatsPeriod, TaskFilter } from '@shared/types'
 import { listAreas } from '@core/repositories/areas'
 import { listBoardTypes, listTypes } from '@core/repositories/types'
 import { listTags } from '@core/repositories/tags'
@@ -13,6 +13,7 @@ import {
   toggleDone
 } from '@core/repositories/entries'
 import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
+import { getStats } from '@core/repositories/stats'
 import { getAllSettings, setSetting } from '@core/repositories/settings'
 import { getDb, getDbPaths } from '../db'
 
@@ -31,6 +32,8 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.sessionActive, () => activeSession(getDb()))
   ipcMain.handle(IPC.sessionStart, (_e, entryId: number | null) => startSession(getDb(), entryId))
   ipcMain.handle(IPC.sessionStop, () => stopSession(getDb()))
+
+  ipcMain.handle(IPC.statsGet, (_e, period: StatsPeriod) => getStats(getDb(), period))
 
   ipcMain.handle(IPC.settingsGetAll, () => getAllSettings(getDb()))
   ipcMain.handle(IPC.settingsSet, (_e, key: string, value: unknown) => setSetting(getDb(), key, value))
