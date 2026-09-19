@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon'
 import { Menu } from '@/components/Menu'
 import { TypeForm } from '@/components/TypeForm'
 import { useEntry } from '@/hooks/useEntry'
+import { useTypes } from '@/hooks/useLookups'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import { formatDuration } from '@/lib/format'
@@ -23,8 +24,10 @@ interface Props {
 export function EntryDetail({ id, onClose, onOpen }: Props) {
   const { t } = useT()
   const { detail, refetch } = useEntry(id)
+  const types = useTypes()
   const [tab, setTab] = useState<Tab>('details')
   const [newLink, setNewLink] = useState({ kind: 'url', label: '', target: '' })
+  const [tagInput, setTagInput] = useState('')
 
   if (!detail) {
     return (
@@ -45,6 +48,26 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
   }
   const changeStage = async (stageId: number) => {
     await api.entries.setStage(id, stageId)
+    await refetch()
+  }
+  const changeType = async (typeId: number) => {
+    await api.entries.setType(id, typeId)
+    await refetch()
+  }
+  const addTag = async () => {
+    const raw = tagInput.trim()
+    if (!raw) return
+    // Format "grupa:nazwa" — bez dwukropka trafia do grupy "inne".
+    const idx = raw.indexOf(':')
+    const group = idx > 0 ? raw.slice(0, idx).trim() : 'inne'
+    const name = (idx > 0 ? raw.slice(idx + 1) : raw).trim()
+    if (!name) return
+    await api.entries.addTag(id, group, name)
+    setTagInput('')
+    await refetch()
+  }
+  const removeTag = async (tagId: number) => {
+    await api.entries.removeTag(id, tagId)
     await refetch()
   }
   const addLink = async () => {
@@ -75,7 +98,12 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
         <button className="iconbtn" aria-label={t('detail.back')} onClick={onClose}>
           <Icon name="arrow-left" size={16} />
         </button>
-        <Icon name={detail.type.icon} size={18} />
+        <Menu
+          trigger={<Icon name={detail.type.icon} size={16} />}
+          items={types.map((ty) => ({ key: String(ty.id), label: ty.name, icon: ty.icon }))}
+          activeKey={String(detail.type.id)}
+          onSelect={(k) => void changeType(Number(k))}
+        />
         <input
           className="pinput pinput--lg detail__title"
           defaultValue={detail.title}
@@ -91,6 +119,27 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
           <Icon name="timer" size={14} />
           {t('detail.session')}
         </button>
+      </div>
+
+      <div className="detail__tags">
+        {detail.tags.map((tag) => (
+          <span key={tag.id} className={`tag${tag.groupName === 'skill' ? ' tag--skill' : ''}`}>
+            <span className="tag__group">{tag.groupName}:</span>
+            {tag.name}
+            <button className="tag__x" aria-label={t('detail.removeTag')} onClick={() => void removeTag(tag.id)}>
+              <Icon name="x" size={10} />
+            </button>
+          </span>
+        ))}
+        <input
+          className="pinput pinput--sm detail__tagadd"
+          placeholder={t('detail.addTag')}
+          value={tagInput}
+          onChange={(e) => setTagInput(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void addTag()
+          }}
+        />
       </div>
 
       {detail.stages.length > 0 && (
