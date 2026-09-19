@@ -1,7 +1,15 @@
 // Kontrakt IPC — jedyny szew między rendererem a danymi.
 // Nazwy kanałów + kształt window.tracker. Implementacja: electron/ipc + electron/preload.
 
-import type { Area, EntryType, SessionActive, TaskFilter, TaskListItem } from './types'
+import type {
+  Area,
+  EntryType,
+  ParentCandidate,
+  SessionActive,
+  Tag,
+  TaskFilter,
+  TaskListItem
+} from './types'
 
 export const IPC = {
   windowMinimize: 'window:minimize',
@@ -10,6 +18,8 @@ export const IPC = {
 
   areasList: 'areas:list',
   typesList: 'types:list',
+  tagsList: 'tags:list',
+  entryParents: 'entry:parents',
 
   tasksList: 'tasks:list',
   entryToggleDone: 'entry:toggleDone',
@@ -33,12 +43,16 @@ export interface TrackerApi {
   types: {
     list(): Promise<EntryType[]>
   }
+  tags: {
+    list(): Promise<Tag[]>
+  }
   tasks: {
     list(filter: TaskFilter): Promise<TaskListItem[]>
   }
   entries: {
     toggleDone(id: number): Promise<TaskListItem>
     quickAdd(line: string): Promise<number>
+    parents(): Promise<ParentCandidate[]>
   }
   sessions: {
     active(): Promise<SessionActive | null>

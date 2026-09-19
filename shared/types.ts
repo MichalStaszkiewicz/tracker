@@ -75,6 +75,15 @@ export interface SessionActive {
   startedAt: string // ISO
 }
 
+/** Lekki kandydat na rodzica do podpowiedzi w szybkim dodawaniu. */
+export interface ParentCandidate {
+  id: number
+  title: string
+  icon: string
+  areaColor: string | null
+  subtitle: string | null
+}
+
 // --- DTO ekranu Zadania ---
 
 export type TaskFilter = 'active' | 'today' | 'blocked' | 'done'

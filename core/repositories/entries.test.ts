@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Connection } from '../db/connection'
 import { makeTestDb } from '../db/test-utils'
 import { seed } from '../db/seed'
-import { getTask, listTasks, quickAdd, toggleDone } from './entries'
+import { getTask, listParentCandidates, listTasks, quickAdd, toggleDone } from './entries'
 // getTask nie potrzebuje `now` — buduje bieżący stan.
 
 const NOW = new Date(2026, 8, 18, 14, 0, 0) // pt 2026-09-18
@@ -72,6 +72,15 @@ describe('toggleDone', () => {
     const back = toggleDone(conn.db, before!.id, NOW)
     expect(back.completedAt).toBeNull()
     expect(back.stage?.isDone).toBe(false)
+  })
+})
+
+describe('listParentCandidates', () => {
+  it('zawiera kontenery (projekt, kurs), pomija zwykłe zadania', () => {
+    const titles = listParentCandidates(conn.db).map((c) => c.title)
+    expect(titles).toContain('Parser PE w C++')
+    expect(titles).toContain('pwn.college: Program Security')
+    expect(titles).not.toContain('Przeczytać RFC 793, sekcja 3.4')
   })
 })
 

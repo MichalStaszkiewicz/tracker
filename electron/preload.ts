@@ -13,12 +13,16 @@ const api: TrackerApi = {
   types: {
     list: () => ipcRenderer.invoke(IPC.typesList)
   },
+  tags: {
+    list: () => ipcRenderer.invoke(IPC.tagsList)
+  },
   tasks: {
     list: (filter) => ipcRenderer.invoke(IPC.tasksList, filter)
   },
   entries: {
     toggleDone: (id) => ipcRenderer.invoke(IPC.entryToggleDone, id),
-    quickAdd: (line) => ipcRenderer.invoke(IPC.entryQuickAdd, line)
+    quickAdd: (line) => ipcRenderer.invoke(IPC.entryQuickAdd, line),
+    parents: () => ipcRenderer.invoke(IPC.entryParents)
   },
   sessions: {
     active: () => ipcRenderer.invoke(IPC.sessionActive),

@@ -3,7 +3,8 @@ import { IPC } from '@shared/ipc'
 import type { TaskFilter } from '@shared/types'
 import { listAreas } from '@core/repositories/areas'
 import { listTypes } from '@core/repositories/types'
-import { listTasks, quickAdd, toggleDone } from '@core/repositories/entries'
+import { listTags } from '@core/repositories/tags'
+import { listParentCandidates, listTasks, quickAdd, toggleDone } from '@core/repositories/entries'
 import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
 import { getDb } from '../db'
 
@@ -11,6 +12,8 @@ import { getDb } from '../db'
 export function registerIpc(): void {
   ipcMain.handle(IPC.areasList, () => listAreas(getDb()))
   ipcMain.handle(IPC.typesList, () => listTypes(getDb()))
+  ipcMain.handle(IPC.tagsList, () => listTags(getDb()))
+  ipcMain.handle(IPC.entryParents, () => listParentCandidates(getDb()))
   ipcMain.handle(IPC.tasksList, (_e, filter: TaskFilter) => listTasks(getDb(), filter))
   ipcMain.handle(IPC.entryToggleDone, (_e, id: number) => toggleDone(getDb(), id))
   ipcMain.handle(IPC.entryQuickAdd, (_e, line: string) => quickAdd(getDb(), line))

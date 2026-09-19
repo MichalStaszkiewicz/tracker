@@ -3,7 +3,7 @@ import type { DB } from '../db/connection'
 import { areas, entries, entryTags, entryTypes, sessions, stages, tags } from '../db/schema'
 import { parseQuickAdd } from '@shared/quick-add-parser'
 import { isDoneToday, taskStatus } from '@shared/task-status'
-import type { Area, Tag, TaskFilter, TaskListItem, TaskStatus } from '@shared/types'
+import type { Area, ParentCandidate, Tag, TaskFilter, TaskListItem, TaskStatus } from '@shared/types'
 
 interface BuiltItem {
   item: TaskListItem
@@ -165,6 +165,35 @@ export function listTasks(db: DB, filter: TaskFilter, now: Date = new Date()): T
 
 export function getTask(db: DB, id: number): TaskListItem | null {
   return buildItems(db).get(id)?.item ?? null
+}
+
+/**
+ * Kandydaci na rodzica do podpowiedzi `>`: wpisy, których typ prowadzi postęp
+ * (progressMode != 'none') — czyli projekty, kursy, crackme. Reguła strukturalna,
+ * bez sprawdzania nazwy typu.
+ */
+export function listParentCandidates(db: DB): ParentCandidate[] {
+  const typeById = new Map(db.select().from(entryTypes).all().map((t) => [t.id, t]))
+  const areaById = new Map(db.select().from(areas).all().map((a) => [a.id, a]))
+  return db
+    .select()
+    .from(entries)
+    .where(isNull(entries.deletedAt))
+    .all()
+    .flatMap((e) => {
+      const type = typeById.get(e.typeId)
+      if (!type || type.progressMode === 'none') return []
+      return [
+        {
+          id: e.id,
+          title: e.title,
+          icon: type.icon,
+          areaColor: e.areaId != null ? areaById.get(e.areaId)?.color ?? null : null,
+          subtitle: type.name
+        }
+      ]
+    })
+    .sort((a, b) => a.title.localeCompare(b.title))
 }
 
 /** Odhaczenie / cofnięcie: przełącza między etapem końcowym a pierwszym. */
