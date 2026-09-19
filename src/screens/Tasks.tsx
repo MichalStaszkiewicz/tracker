@@ -13,6 +13,7 @@ import { useTags, useTypes } from '@/hooks/useLookups'
 import { useTasks } from '@/hooks/useTasks'
 import { useT } from '@/i18n'
 import { filterTasks, groupTasks, type GroupBy } from '@/lib/task-view'
+import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { taskStatus } from '@shared/task-status'
 import type { TaskFilter } from '@shared/types'
 
@@ -70,7 +71,7 @@ export function Tasks() {
               {t('tasks.session')}
               <span className="btn__kbd">⌃T</span>
             </button>
-            <button className="btn btn--accent" onClick={() => inputFocus()}>
+            <button className="btn btn--accent" onClick={() => requestQuickAddFocus()}>
               <Icon name="plus" size={13} />
               {t('tasks.add')}
               <span className="btn__kbd">⌃⇧␣</span>
@@ -116,8 +117,4 @@ export function Tasks() {
       />
     </div>
   )
-}
-
-function inputFocus() {
-  document.querySelector<HTMLInputElement>('.quickadd__input')?.focus()
 }

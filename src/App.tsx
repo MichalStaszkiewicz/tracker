@@ -3,6 +3,7 @@ import { AppShell } from '@/components/AppShell'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
 import { useHotkeys } from '@/hooks/useHotkeys'
+import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import { Tasks } from '@/screens/Tasks'
@@ -25,9 +26,7 @@ export function App() {
     ),
     'ctrl+shift+space': () => {
       setScreen('tasks')
-      requestAnimationFrame(() =>
-        document.querySelector<HTMLInputElement>('.quickadd__input')?.focus()
-      )
+      requestQuickAddFocus()
     }
   })
 

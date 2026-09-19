@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { useT } from '@/i18n'
 import { useParents, useTags, useTypes } from '@/hooks/useLookups'
+import { registerQuickAddFocus } from '@/lib/quick-add-focus'
 import { fuzzyRank } from '@shared/fuzzy'
 import {
   activeToken,
@@ -68,6 +69,18 @@ export function QuickAdd({ onSubmit }: { onSubmit: (line: string) => void }) {
   const parsed = useMemo(() => parseQuickAdd(value), [value])
 
   useEffect(() => setHi(0), [value, caret])
+
+  useEffect(
+    () =>
+      registerQuickAddFocus(() => {
+        const el = inputRef.current
+        if (el) {
+          el.focus()
+          el.select()
+        }
+      }),
+    []
+  )
 
   const sync = (el: HTMLInputElement) => {
     setValue(el.value)
