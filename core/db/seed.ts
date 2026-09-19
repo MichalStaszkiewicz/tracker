@@ -73,20 +73,11 @@ function dateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-/** Wypełnia świeżą bazę typami startowymi i przykładowymi danymi. Idempotentne. */
-export function seed(db: DB, now: Date = new Date()): void {
-  const already = db.select().from(entryTypes).all()
-  if (already.length > 0) return
+/** Typy startowe + domyślne ustawienia (konfiguracja aplikacji, NIE dane mock). Idempotentne. */
+export function seed(db: DB): void {
+  if (db.select().from(entryTypes).all().length > 0) return
 
-  // Typy + etapy
-  const typeIdByKey = new Map<string, number>()
-  const stageId = (typeKey: string, stageName: string): number | null => {
-    const t = typeIdByKey.get(typeKey)
-    if (t == null) return null
-    return db.select().from(stages).all().find((s) => s.typeId === t && s.name === stageName)?.id ?? null
-  }
-  for (let i = 0; i < STARTER_TYPES.length; i++) {
-    const t = STARTER_TYPES[i]
+  STARTER_TYPES.forEach((t, i) => {
     const inserted = db
       .insert(entryTypes)
       .values({
@@ -96,10 +87,25 @@ export function seed(db: DB, now: Date = new Date()): void {
       })
       .returning({ id: entryTypes.id })
       .get()
-    typeIdByKey.set(t.key, inserted.id)
     t.stages.forEach((s, si) => {
       db.insert(stages).values({ typeId: inserted.id, name: s.name, position: si, isDone: s.isDone ?? false }).run()
     })
+  })
+
+  db.insert(settings).values({ key: 'language', value: 'pl' }).run()
+  db.insert(settings).values({ key: 'streakThresholdMinutes', value: 25 }).run()
+}
+
+/** Dane demo (obszary, wpisy, oferty, sesje) — TYLKO do testów/podglądu, NIE do produkcji. Idempotentne. */
+export function seedDemo(db: DB, now: Date = new Date()): void {
+  seed(db)
+  if (db.select().from(areas).all().length > 0) return
+
+  const typeIdByKey = new Map(db.select().from(entryTypes).all().map((t) => [t.key, t.id]))
+  const stageId = (typeKey: string, stageName: string): number | null => {
+    const t = typeIdByKey.get(typeKey)
+    if (t == null) return null
+    return db.select().from(stages).all().find((s) => s.typeId === t && s.name === stageName)?.id ?? null
   }
 
   // Obszary (kolory jak tokeny --area-N)
@@ -188,10 +194,6 @@ export function seed(db: DB, now: Date = new Date()): void {
   db.insert(sessions).values({ entryId: iat, startedAt: iso(addMinutes(now, -42)), endedAt: null, note: null }).run()
   db.insert(sessions).values({ entryId: babyheap, startedAt: iso(addMinutes(now, -220)), endedAt: iso(addMinutes(now, -120)), note: null }).run()
   db.insert(sessions).values({ entryId: babyheap, startedAt: iso(addMinutes(now, -90)), endedAt: iso(addMinutes(now, -30)), note: null }).run()
-
-  // Ustawienia
-  db.insert(settings).values({ key: 'language', value: 'pl' }).run()
-  db.insert(settings).values({ key: 'streakThresholdMinutes', value: 25 }).run()
 }
 
 function addDays(d: Date, n: number): Date {
