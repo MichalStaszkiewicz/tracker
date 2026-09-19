@@ -1,0 +1,13 @@
+node_modules/
+out/
+dist/
+dist-electron/
+*.local
+.DS_Store
+Thumbs.db
+
+# local database + backups (never commit user data)
+data/
+backups/
+*.sqlite
+*.sqlite-*
