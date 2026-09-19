@@ -35,7 +35,8 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
   }
 
   const commitData = async (key: string, value: unknown) => {
-    await api.entries.update(id, { data: { ...detail.data, [key]: value } })
+    // Wysyłamy tylko zmienione pole — repo scala z resztą (bez wyścigu o stały detail.data).
+    await api.entries.update(id, { data: { [key]: value } })
     await refetch()
   }
   const commit = async (patch: Parameters<typeof api.entries.update>[1]) => {

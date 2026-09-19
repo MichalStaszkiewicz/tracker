@@ -266,11 +266,14 @@ export function getEntryDetail(db: DB, id: number): EntryDetail | null {
 
 /** Częściowa aktualizacja wpisu (tytuł, opis, pola typu, obszar, daty, priorytet). */
 export function updateEntry(db: DB, id: number, patch: EntryPatch, now: Date = new Date()): EntryDetail {
+  const existing = db.select().from(entries).where(eq(entries.id, id)).get()
+  if (!existing) throw new Error(`Wpis ${id} nie istnieje`)
   const set = {
     updatedAt: nowIso(now),
     ...(patch.title !== undefined && { title: patch.title }),
     ...(patch.descriptionMd !== undefined && { descriptionMd: patch.descriptionMd }),
-    ...(patch.data !== undefined && { data: patch.data }),
+    // Scalanie pól typu (a nie podmiana) — bezpieczne przy szybkiej edycji wielu pól.
+    ...(patch.data !== undefined && { data: { ...existing.data, ...patch.data } }),
     ...(patch.areaId !== undefined && { areaId: patch.areaId }),
     ...(patch.priority !== undefined && { priority: patch.priority }),
     ...(patch.plannedDate !== undefined && { plannedDate: patch.plannedDate }),

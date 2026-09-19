@@ -48,6 +48,14 @@ describe('updateEntry', () => {
     expect(d.descriptionMd).toContain('Writeup')
     expect(d.data.level).toBe(4)
   })
+
+  it('scala pola typu — aktualizacja jednego pola nie kasuje reszty', () => {
+    const id = idOf('babyheap level 3')
+    updateEntry(conn.db, id, { data: { level: 5 } })
+    const d = getEntryDetail(conn.db, id)!
+    expect(d.data.level).toBe(5)
+    expect(d.data.technique).toBe('heap')
+  })
 })
 
 describe('linki', () => {
