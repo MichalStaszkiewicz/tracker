@@ -20,14 +20,17 @@ export function App() {
   const [screen, setScreen] = useState<NavKey>('tasks')
   const areas = useAreas()
 
+  const focusAdd = () => {
+    setScreen('tasks')
+    requestQuickAddFocus()
+  }
+
   useHotkeys({
     ...Object.fromEntries(
       Object.entries(SCREEN_BY_NUMBER).map(([combo, key]) => [combo, () => setScreen(key)])
     ),
-    'ctrl+shift+space': () => {
-      setScreen('tasks')
-      requestQuickAddFocus()
-    }
+    'ctrl+shift+space': focusAdd,
+    'ctrl+arrowup': focusAdd
   })
 
   return (
