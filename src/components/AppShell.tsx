@@ -9,13 +9,22 @@ interface Props {
   areas: Area[]
   activeAreaId?: number | null
   onAreaSelect: (area: Area) => void
+  onOpenPalette: () => void
   children: ReactNode
 }
 
-export function AppShell({ current, onNavigate, areas, activeAreaId, onAreaSelect, children }: Props) {
+export function AppShell({
+  current,
+  onNavigate,
+  areas,
+  activeAreaId,
+  onAreaSelect,
+  onOpenPalette,
+  children
+}: Props) {
   return (
     <div className="app">
-      <TitleBar />
+      <TitleBar onOpenPalette={onOpenPalette} />
       <div className="body">
         <Sidebar
           current={current}

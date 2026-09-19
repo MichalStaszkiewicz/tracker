@@ -1,14 +1,14 @@
 import { api } from '@/api'
 import { Icon } from './Icon'
 
-export function TitleBar() {
+export function TitleBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   return (
     <div className="titlebar">
       <span className="titlebar__brand">tracker</span>
-      <span className="titlebar__search">
+      <button className="titlebar__search" onClick={onOpenPalette}>
         <Icon name="magnifying-glass" size={11} />
         Ctrl K
-      </span>
+      </button>
       <span className="titlebar__win">
         <button className="winbtn" onClick={() => api.window.minimize()} aria-label="Minimalizuj">
           <Icon name="minus" size={12} />

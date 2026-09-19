@@ -152,6 +152,12 @@ export const strings = {
     'link.file': 'Plik',
     'link.folder': 'Folder',
     'link.repo': 'Repo',
+    'pal.placeholder': 'Szukaj wpisów i akcji…',
+    'pal.actions': 'akcje',
+    'pal.entries': 'wpisy',
+    'pal.empty': 'Brak wyników',
+    'pal.startSession': 'Start sesji',
+    'pal.stopSession': 'Stop sesji',
     'soon': 'wkrótce'
   },
   en: {
@@ -306,6 +312,12 @@ export const strings = {
     'link.file': 'File',
     'link.folder': 'Folder',
     'link.repo': 'Repo',
+    'pal.placeholder': 'Search entries and actions…',
+    'pal.actions': 'actions',
+    'pal.entries': 'entries',
+    'pal.empty': 'No results',
+    'pal.startSession': 'Start session',
+    'pal.stopSession': 'Stop session',
     'soon': 'soon'
   }
 } as const

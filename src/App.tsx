@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { api } from '@/api'
 import { AppShell } from '@/components/AppShell'
+import { CommandPalette, type PaletteAction } from '@/components/CommandPalette'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
 import { useHotkeys } from '@/hooks/useHotkeys'
@@ -16,9 +18,11 @@ import { Stats } from '@/screens/Stats'
 import { Tasks } from '@/screens/Tasks'
 
 export function App() {
+  const { t } = useT()
   const [screen, setScreen] = useState<NavKey>('tasks')
   const [taskArea, setTaskArea] = useState<{ id: number; name: string } | null>(null)
   const [openEntryId, setOpenEntryId] = useState<number | null>(null)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const areas = useAreas()
   const { shortcuts } = useSettingsCtx()
 
@@ -46,17 +50,34 @@ export function App() {
     [shortcuts['screen.offers']]: () => navigate('offers'),
     [shortcuts['screen.stats']]: () => navigate('stats'),
     [shortcuts.quickAdd]: focusAdd,
-    'ctrl+arrowup': focusAdd
+    'ctrl+arrowup': focusAdd,
+    'ctrl+k': () => setPaletteOpen((o) => !o)
   })
+
+  const NAV_ICON: Record<NavKey, string> = {
+    tasks: 'check-square',
+    inbox: 'tray',
+    board: 'columns',
+    offers: 'briefcase',
+    stats: 'chart-bar',
+    profile: 'user',
+    settings: 'gear'
+  }
+  const paletteActions: PaletteAction[] = [
+    ...(['tasks', 'inbox', 'board', 'offers', 'stats', 'profile', 'settings'] as NavKey[]).map((k) => ({
+      id: `go.${k}`,
+      icon: NAV_ICON[k],
+      label: t(`nav.${k}` as StringKey),
+      run: () => navigate(k)
+    })),
+    { id: 'add', icon: 'plus', label: t('tasks.add'), run: focusAdd },
+    { id: 'session.start', icon: 'timer', label: t('pal.startSession'), run: () => void api.sessions.start(null) },
+    { id: 'session.stop', icon: 'pause', label: t('pal.stopSession'), run: () => void api.sessions.stop() }
+  ]
 
   const content =
     openEntryId !== null ? (
-      <EntryDetail
-        key={openEntryId}
-        id={openEntryId}
-        onClose={() => setOpenEntryId(null)}
-        onOpen={setOpenEntryId}
-      />
+      <EntryDetail key={openEntryId} id={openEntryId} onClose={() => setOpenEntryId(null)} onOpen={setOpenEntryId} />
     ) : screen === 'tasks' ? (
       <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} onOpenEntry={setOpenEntryId} />
     ) : screen === 'board' ? (
@@ -72,15 +93,25 @@ export function App() {
     )
 
   return (
-    <AppShell
-      current={screen}
-      onNavigate={navigate}
-      areas={areas}
-      activeAreaId={screen === 'tasks' && openEntryId === null ? taskArea?.id ?? null : null}
-      onAreaSelect={selectArea}
-    >
-      {content}
-    </AppShell>
+    <>
+      <AppShell
+        current={screen}
+        onNavigate={navigate}
+        areas={areas}
+        activeAreaId={screen === 'tasks' && openEntryId === null ? taskArea?.id ?? null : null}
+        onAreaSelect={selectArea}
+        onOpenPalette={() => setPaletteOpen(true)}
+      >
+        {content}
+      </AppShell>
+      {paletteOpen && (
+        <CommandPalette
+          actions={paletteActions}
+          onClose={() => setPaletteOpen(false)}
+          onOpenEntry={setOpenEntryId}
+        />
+      )}
+    </>
   )
 }
 
