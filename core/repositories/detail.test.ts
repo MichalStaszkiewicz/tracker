@@ -1,9 +1,11 @@
+import { eq } from 'drizzle-orm'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Connection } from '../db/connection'
 import { makeTestDb } from '../db/test-utils'
+import { entries } from '../db/schema'
 import { seed } from '../db/seed'
 import { getEntryDetail, listTasks, updateEntry } from './entries'
-import { addLink, listLinks, removeLink } from './links'
+import { addLink, listLinks, removeLink, updateLink } from './links'
 import { addTagToEntry, removeTagFromEntry } from './tags'
 
 const NOW = new Date(2026, 8, 18, 14, 0, 0)
@@ -33,6 +35,12 @@ describe('getEntryDetail', () => {
 
   it('null dla nieistniejącego wpisu', () => {
     expect(getEntryDetail(conn.db, 99999)).toBeNull()
+  })
+
+  it('null dla miękko usuniętego wpisu', () => {
+    const id = idOf('Import Address Table')
+    conn.db.update(entries).set({ deletedAt: NOW.toISOString() }).where(eq(entries.id, id)).run()
+    expect(getEntryDetail(conn.db, id)).toBeNull()
   })
 })
 
@@ -66,6 +74,13 @@ describe('linki', () => {
     removeLink(conn.db, link.id)
     expect(listLinks(conn.db, id)).toHaveLength(0)
   })
+
+  it('aktualizuje link', () => {
+    const id = idOf('Import Address Table')
+    const link = addLink(conn.db, id, 'url', 'A', 'https://a.example')
+    updateLink(conn.db, link.id, { label: 'B' })
+    expect(listLinks(conn.db, id).find((l) => l.id === link.id)?.label).toBe('B')
+  })
 })
 
 describe('tagi wpisu', () => {
@@ -75,5 +90,12 @@ describe('tagi wpisu', () => {
     expect(getEntryDetail(conn.db, id)!.tags.some((t) => t.name === 'tcp')).toBe(true)
     removeTagFromEntry(conn.db, id, tag.id)
     expect(getEntryDetail(conn.db, id)!.tags.some((t) => t.name === 'tcp')).toBe(false)
+  })
+
+  it('nie duplikuje tego samego tagu', () => {
+    const id = idOf('Przeczytać RFC 793, sekcja 3.4')
+    addTagToEntry(conn.db, id, 'tech', 'tcp')
+    addTagToEntry(conn.db, id, 'tech', 'tcp')
+    expect(getEntryDetail(conn.db, id)!.tags.filter((t) => t.name === 'tcp')).toHaveLength(1)
   })
 })

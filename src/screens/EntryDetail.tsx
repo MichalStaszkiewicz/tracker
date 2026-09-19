@@ -58,11 +58,13 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
     await refetch()
   }
   const openLink = (l: Link) => {
-    if ((l.kind === 'url' || l.kind === 'repo') && /^https?:\/\//i.test(l.target)) {
-      api.system.openExternal(l.target)
-    } else {
+    if (l.kind === 'file' || l.kind === 'folder') {
       api.system.openPath(l.target)
+      return
     }
+    // url / repo → przeglądarka; dołóż https:// gdy brak schematu (np. "github.com/x")
+    const url = /^[a-z][a-z0-9+.-]*:\/\//i.test(l.target) ? l.target : `https://${l.target}`
+    api.system.openExternal(url)
   }
 
   const tabs: Tab[] = ['details', 'notes', 'links', 'time']
