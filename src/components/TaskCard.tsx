@@ -11,21 +11,33 @@ interface Props {
 
 export function TaskCard({ item, onToggle }: Props) {
   const { t } = useT()
+  const [completing, setCompleting] = useState(false)
   const done = item.completedAt != null || item.stage?.isDone === true
+  const showDone = done || completing
+
+  const handleCheck = () => {
+    if (done) {
+      onToggle(item.id) // cofnięcie — od razu
+      return
+    }
+    setCompleting(true) // animacja oddania, potem przeniesienie
+    window.setTimeout(() => onToggle(item.id), 280)
+  }
 
   const cls = ['card']
   if (item.activeSession) cls.push('card--active')
-  if (done) cls.push('card--done')
+  if (showDone) cls.push('card--done')
+  if (completing) cls.push('card--completing')
 
   return (
     <div className={cls.join(' ')}>
       <span className="card__bar" style={{ background: item.area?.color ?? 'var(--color-neutral-700)' }} />
       <button
-        className={`card__check${done ? ' card__check--done' : ''}`}
+        className={`card__check${showDone ? ' card__check--done' : ''}`}
         aria-label={done ? 'Cofnij' : 'Odhacz'}
-        onClick={() => onToggle(item.id)}
+        onClick={handleCheck}
       >
-        {done && <Icon name="check" size={11} />}
+        {showDone && <Icon name="check" size={11} />}
       </button>
 
       <div className="card__body">
