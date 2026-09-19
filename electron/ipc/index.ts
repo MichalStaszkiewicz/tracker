@@ -13,6 +13,7 @@ import {
   quickAdd,
   searchEntries,
   setStage,
+  setType,
   toggleDone,
   updateEntry
 } from '@core/repositories/entries'
@@ -38,6 +39,7 @@ export function registerIpc(): void {
     quickAdd(getDb(), line, new Date(), ctx)
   )
   ipcMain.handle(IPC.entrySetStage, (_e, id: number, stageId: number) => setStage(getDb(), id, stageId))
+  ipcMain.handle(IPC.entrySetType, (_e, id: number, typeId: number) => setType(getDb(), id, typeId))
   ipcMain.handle(IPC.entryDetail, (_e, id: number) => getEntryDetail(getDb(), id))
   ipcMain.handle(IPC.entryUpdate, (_e, id: number, patch: EntryPatch) => updateEntry(getDb(), id, patch))
   ipcMain.handle(IPC.entryAddTag, (_e, id: number, group: string, name: string) =>

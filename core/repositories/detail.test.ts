@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { Connection } from '../db/connection'
 import { makeTestDb } from '../db/test-utils'
 import { entries } from '../db/schema'
-import { seed } from '../db/seed'
-import { getEntryDetail, listTasks, updateEntry } from './entries'
+import { seedDemo } from '../db/seed'
+import { getEntryDetail, listTasks, setType, updateEntry } from './entries'
+import { listTypes } from './types'
 import { addLink, listLinks, removeLink, updateLink } from './links'
 import { addTagToEntry, removeTagFromEntry } from './tags'
 
@@ -12,7 +13,7 @@ const NOW = new Date(2026, 8, 18, 14, 0, 0)
 let conn: Connection
 beforeEach(() => {
   conn = makeTestDb()
-  seed(conn.db, NOW)
+  seedDemo(conn.db, NOW)
 })
 const idOf = (title: string) => listTasks(conn.db, 'active', NOW).find((i) => i.title === title)!.id
 
@@ -63,6 +64,16 @@ describe('updateEntry', () => {
     const d = getEntryDetail(conn.db, id)!
     expect(d.data.level).toBe(5)
     expect(d.data.technique).toBe('heap')
+  })
+})
+
+describe('setType', () => {
+  it('zmienia typ i resetuje etap na pierwszy nowego typu', () => {
+    const id = idOf('Przeczytać RFC 793, sekcja 3.4')
+    const projectId = listTypes(conn.db).find((t) => t.key === 'project')!.id
+    const d = setType(conn.db, id, projectId)
+    expect(d.type.key).toBe('project')
+    expect(d.stage?.name).toBe('Pomysł')
   })
 })
 

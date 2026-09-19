@@ -39,6 +39,7 @@ export const IPC = {
   entryToggleDone: 'entry:toggleDone',
   entryQuickAdd: 'entry:quickAdd',
   entrySetStage: 'entry:setStage',
+  entrySetType: 'entry:setType',
   entryDetail: 'entry:detail',
   entryUpdate: 'entry:update',
   entryAddTag: 'entry:addTag',
@@ -96,6 +97,7 @@ export interface TrackerApi {
     parents(): Promise<ParentCandidate[]>
     search(q: string): Promise<EntrySearchResult[]>
     setStage(id: number, stageId: number): Promise<TaskListItem>
+    setType(id: number, typeId: number): Promise<EntryDetail>
     detail(id: number): Promise<EntryDetail | null>
     update(id: number, patch: EntryPatch): Promise<EntryDetail>
     addTag(id: number, group: string, name: string): Promise<Tag>
