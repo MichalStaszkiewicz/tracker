@@ -27,6 +27,7 @@ export const IPC = {
   windowClose: 'window:close',
 
   areasList: 'areas:list',
+  areasCreate: 'areas:create',
   typesList: 'types:list',
   tagsList: 'tags:list',
   entryParents: 'entry:parents',
@@ -74,6 +75,7 @@ export interface TrackerApi {
   }
   areas: {
     list(): Promise<Area[]>
+    create(name: string, color: string): Promise<Area>
   }
   types: {
     list(): Promise<EntryType[]>

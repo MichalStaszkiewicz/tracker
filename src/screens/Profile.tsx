@@ -23,7 +23,7 @@ const iconForKind = (kind: string): string => SERVICES.find((s) => s.kind === ki
 export function Profile() {
   const { t } = useT()
   const { settings, set } = useSettingsCtx()
-  const areas = useAreas()
+  const { areas } = useAreas()
   const { tags } = useTags()
 
   const [editing, setEditing] = useState(false)

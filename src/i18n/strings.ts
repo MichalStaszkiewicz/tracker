@@ -182,6 +182,12 @@ export const strings = {
     'imp.cancel': 'Anuluj',
     'imp.dedup': 'duplikaty rozpoznane po URL',
     'imp.sample': 'podgląd nowych',
+    'area.new': 'Nowy obszar',
+    'area.name': 'nazwa',
+    'area.namePlaceholder': 'np. Reverse engineering',
+    'area.color': 'kolor',
+    'area.create': 'Utwórz',
+    'area.cancel': 'Anuluj',
     'soon': 'wkrótce'
   },
   en: {
@@ -366,6 +372,12 @@ export const strings = {
     'imp.cancel': 'Cancel',
     'imp.dedup': 'duplicates detected by URL',
     'imp.sample': 'new preview',
+    'area.new': 'New area',
+    'area.name': 'name',
+    'area.namePlaceholder': 'e.g. Reverse engineering',
+    'area.color': 'color',
+    'area.create': 'Create',
+    'area.cancel': 'Cancel',
     'soon': 'soon'
   }
 } as const

@@ -24,8 +24,13 @@ export function App() {
   const [taskArea, setTaskArea] = useState<{ id: number; name: string } | null>(null)
   const [openEntryId, setOpenEntryId] = useState<number | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
-  const areas = useAreas()
+  const { areas, reload: reloadAreas } = useAreas()
   const { shortcuts } = useSettingsCtx()
+
+  const createArea = async (name: string, color: string) => {
+    await api.areas.create(name, color)
+    reloadAreas()
+  }
 
   const navigate = (key: NavKey) => {
     setOpenEntryId(null)
@@ -99,6 +104,7 @@ export function App() {
         areas={areas}
         activeAreaId={screen === 'tasks' && openEntryId === null ? taskArea?.id ?? null : null}
         onAreaSelect={selectArea}
+        onCreateArea={createArea}
         onOpenPalette={() => setPaletteOpen(true)}
       >
         {content}

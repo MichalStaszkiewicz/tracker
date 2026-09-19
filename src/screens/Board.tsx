@@ -19,7 +19,7 @@ export function Board({ onOpenEntry }: { onOpenEntry?: (id: number) => void }) {
   }, [types, typeId])
 
   const { view, refetch } = useBoard(typeId)
-  const areas = useAreas()
+  const { areas } = useAreas()
   const { tags } = useTags()
   const [areaId, setAreaId] = useState<number | undefined>()
   const [tagId, setTagId] = useState<number | undefined>()

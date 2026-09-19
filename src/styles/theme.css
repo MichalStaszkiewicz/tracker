@@ -194,6 +194,18 @@ button { font-family: var(--font-body); }
 .areaitem--active { background: color-mix(in srgb, var(--color-accent) 11%, transparent); box-shadow: inset 2px 0 0 var(--color-accent); color: var(--color-text); }
 .areadot { width: 3px; height: 12px; border-radius: 2px; flex: none; }
 .areaitem__count { margin-left: auto; font: 400 10px var(--mono); color: var(--color-neutral-500); }
+.sidebar__areahead { position: relative; display: flex; align-items: center; }
+.sidebar__addarea { margin-left: auto; margin-right: 6px; width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--color-neutral-500); cursor: pointer; }
+.sidebar__addarea:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); color: var(--color-text); }
+.areapop { position: absolute; left: 8px; right: 8px; top: calc(100% + 4px); z-index: 50; border-radius: 12px; background: var(--color-surface); box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-neutral-700); padding: 13px; display: flex; flex-direction: column; gap: 14px; }
+.areapop__head { display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 500; color: var(--color-accent-200); }
+.areapop__field { display: flex; flex-direction: column; gap: 8px; }
+.areapop__label { font: 400 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500); }
+.areapop__colors { display: flex; flex-wrap: wrap; gap: 9px; }
+.areapop__dot { width: 20px; height: 20px; border: 0; border-radius: 50%; cursor: pointer; padding: 0; }
+.areapop__dot--active { box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 3.5px var(--color-accent); }
+.areapop__actions { display: flex; gap: 8px; justify-content: flex-end; }
+
 .sidebar__foot { margin-top: auto; display: flex; flex-direction: column; gap: 1px; }
 
 /* --- Screen --- */

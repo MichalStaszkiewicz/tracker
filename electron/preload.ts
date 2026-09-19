@@ -8,7 +8,8 @@ const api: TrackerApi = {
     close: () => ipcRenderer.send(IPC.windowClose)
   },
   areas: {
-    list: () => ipcRenderer.invoke(IPC.areasList)
+    list: () => ipcRenderer.invoke(IPC.areasList),
+    create: (name, color) => ipcRenderer.invoke(IPC.areasCreate, name, color)
   },
   types: {
     list: () => ipcRenderer.invoke(IPC.typesList)

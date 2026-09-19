@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
 import type { EntryPatch, ImportOffer, StatsPeriod, TaskFilter } from '@shared/types'
-import { listAreas } from '@core/repositories/areas'
+import { createArea, listAreas } from '@core/repositories/areas'
 import { listBoardTypes, listTypes } from '@core/repositories/types'
 import { addTagToEntry, listTags, removeTagFromEntry } from '@core/repositories/tags'
 import { addLink, removeLink, updateLink } from '@core/repositories/links'
@@ -25,6 +25,7 @@ import { getDb, getDbPaths } from '../db'
 /** Rejestruje handlery IPC — kanały 1:1 z kontraktem shared/ipc.ts. */
 export function registerIpc(): void {
   ipcMain.handle(IPC.areasList, () => listAreas(getDb()))
+  ipcMain.handle(IPC.areasCreate, (_e, name: string, color: string) => createArea(getDb(), name, color))
   ipcMain.handle(IPC.typesList, () => listTypes(getDb()))
   ipcMain.handle(IPC.tagsList, () => listTags(getDb()))
   ipcMain.handle(IPC.entryParents, () => listParentCandidates(getDb()))
