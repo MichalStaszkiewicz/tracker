@@ -4,8 +4,10 @@ export interface AppSettings {
   language: Lang
   theme: 'dark' | 'light' | 'system'
   accent: string
+  font: 'inter' | 'system' | 'mono'
   density: 'compact' | 'comfortable'
   monoNumbers: boolean
+  shortcuts: Record<string, string>
   streakThresholdMinutes: number
   defaultSessionMinutes: number
   autoPause: boolean
@@ -18,8 +20,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   language: 'pl',
   theme: 'dark',
   accent: 'mono',
+  font: 'inter',
   density: 'compact',
   monoNumbers: true,
+  shortcuts: {},
   streakThresholdMinutes: 25,
   defaultSessionMinutes: 50,
   autoPause: true,
