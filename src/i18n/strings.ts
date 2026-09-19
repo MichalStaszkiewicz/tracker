@@ -61,6 +61,11 @@ export const strings = {
     'density.comfortable': 'Wygodny',
     'set.mono': 'Mono w liczbach i skrótach',
     'set.mono.desc': 'JetBrains Mono na czasie, licznikach i klawiszach.',
+    'set.font': 'Czcionka',
+    'set.font.desc': 'Krój interfejsu.',
+    'font.inter': 'Inter',
+    'font.system': 'Systemowa',
+    'font.mono': 'Mono',
     'set.sessions': 'Sesje i czas',
     'set.sessions.hint': 'timer i streak',
     'set.streak': 'Dzienny próg streaka',
@@ -94,6 +99,9 @@ export const strings = {
     'sc.screens': 'Przełączanie ekranów',
     'sc.check': 'Odhacz zadanie',
     'sc.undo': 'Cofnij usunięcie',
+    'sc.goto': 'Przejdź do',
+    'sc.recording': 'naciśnij skrót…',
+    'sc.reset': 'domyślny',
     'soon': 'wkrótce'
   },
   en: {
@@ -157,6 +165,11 @@ export const strings = {
     'density.comfortable': 'Comfortable',
     'set.mono': 'Mono for numbers and shortcuts',
     'set.mono.desc': 'JetBrains Mono on time, counters and keys.',
+    'set.font': 'Font',
+    'set.font.desc': 'Interface typeface.',
+    'font.inter': 'Inter',
+    'font.system': 'System',
+    'font.mono': 'Mono',
     'set.sessions': 'Sessions & time',
     'set.sessions.hint': 'timer and streak',
     'set.streak': 'Daily streak threshold',
@@ -190,6 +203,9 @@ export const strings = {
     'sc.screens': 'Switch screens',
     'sc.check': 'Check off task',
     'sc.undo': 'Undo delete',
+    'sc.goto': 'Go to',
+    'sc.recording': 'press a shortcut…',
+    'sc.reset': 'default',
     'soon': 'soon'
   }
 } as const

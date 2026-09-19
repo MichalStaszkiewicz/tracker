@@ -5,35 +5,34 @@ import { SegmentedControl } from '@/components/SegmentedControl'
 import { SettingsRow } from '@/components/SettingsRow'
 import { SettingsSection } from '@/components/SettingsSection'
 import { SettingsSubNav } from '@/components/SettingsSubNav'
+import { ShortcutRow } from '@/components/ShortcutRow'
 import { Stepper } from '@/components/Stepper'
 import { Toggle } from '@/components/Toggle'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
-import type { AppSettings } from '@shared/settings'
+import { useSettingsCtx } from '@/settings-context'
+import { SHORTCUT_ACTIONS, type ShortcutAction } from '@shared/shortcuts'
 
 const ACCENTS = [
-  { key: 'mono', color: 'oklch(0.95 0 0)' },
-  { key: 'red', color: 'oklch(0.66 0.16 24)' },
-  { key: 'blurple', color: '#9184d9' },
-  { key: 'amber', color: 'oklch(0.80 0.13 85)' }
+  { key: 'mono', color: 'oklch(0.72 0 0)' },
+  { key: 'blue', color: 'oklch(0.62 0.13 240)' },
+  { key: 'violet', color: 'oklch(0.62 0.13 288)' },
+  { key: 'green', color: 'oklch(0.64 0.13 152)' },
+  { key: 'amber', color: 'oklch(0.74 0.13 70)' },
+  { key: 'red', color: 'oklch(0.62 0.16 24)' }
 ]
 
-const SHORTCUTS: { label: StringKey; combo: string }[] = [
-  { label: 'sc.quickAdd', combo: 'Ctrl ⇧ Space' },
-  { label: 'sc.palette', combo: 'Ctrl K' },
-  { label: 'sc.session', combo: 'Ctrl T' },
-  { label: 'sc.screens', combo: 'Ctrl 1…5' },
-  { label: 'sc.check', combo: 'Space' },
-  { label: 'sc.undo', combo: 'Ctrl Z' }
-]
-
-interface Props {
-  settings: AppSettings
-  set: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void
+const SCREEN_NAV: Record<string, StringKey> = {
+  'screen.tasks': 'nav.tasks',
+  'screen.inbox': 'nav.inbox',
+  'screen.board': 'nav.board',
+  'screen.offers': 'nav.offers',
+  'screen.stats': 'nav.stats'
 }
 
-export function Settings({ settings, set }: Props) {
+export function Settings() {
   const { t } = useT()
+  const { settings, set, shortcuts } = useSettingsCtx()
   const [current, setCurrent] = useState('appearance')
   const [dbPath, setDbPath] = useState('')
 
@@ -52,6 +51,19 @@ export function Settings({ settings, set }: Props) {
   const go = (key: string) => {
     setCurrent(key)
     refs[key as keyof typeof refs].current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const shortcutLabel = (action: ShortcutAction): string => {
+    if (action === 'quickAdd') return t('sc.quickAdd')
+    if (action === 'session') return t('sc.session')
+    return `${t('sc.goto')} ${t(SCREEN_NAV[action])}`
+  }
+  const recordShortcut = (action: ShortcutAction, combo: string) =>
+    set('shortcuts', { ...settings.shortcuts, [action]: combo })
+  const resetShortcut = (action: ShortcutAction) => {
+    const next = { ...settings.shortcuts }
+    delete next[action]
+    set('shortcuts', next)
   }
 
   const subnav = [
@@ -102,6 +114,17 @@ export function Settings({ settings, set }: Props) {
                   />
                 ))}
               </div>
+            </SettingsRow>
+            <SettingsRow title={t('set.font')} desc={t('set.font.desc')}>
+              <SegmentedControl
+                value={settings.font}
+                onChange={(v) => set('font', v)}
+                options={[
+                  { key: 'inter', label: t('font.inter') },
+                  { key: 'system', label: t('font.system') },
+                  { key: 'mono', label: t('font.mono') }
+                ]}
+              />
             </SettingsRow>
             <SettingsRow title={t('set.density')} desc={t('set.density.desc')}>
               <SegmentedControl
@@ -173,11 +196,15 @@ export function Settings({ settings, set }: Props) {
 
           <SettingsSection ref={refs.shortcuts} title={t('set.shortcuts')} hint={t('set.shortcuts.hint')}>
             <div className="sclist">
-              {SHORTCUTS.map((s) => (
-                <div className="scrow" key={s.label}>
-                  <span className="scrow__label">{t(s.label)}</span>
-                  <span className="scrow__combo">{s.combo}</span>
-                </div>
+              {SHORTCUT_ACTIONS.map((action) => (
+                <ShortcutRow
+                  key={action}
+                  label={shortcutLabel(action)}
+                  combo={shortcuts[action]}
+                  custom={settings.shortcuts[action] !== undefined}
+                  onRecord={(c) => recordShortcut(action, c)}
+                  onReset={() => resetShortcut(action)}
+                />
               ))}
             </div>
           </SettingsSection>
