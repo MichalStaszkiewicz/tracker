@@ -4,19 +4,16 @@ export type ShortcutAction =
   | 'quickAdd'
   | 'session'
   | 'screen.tasks'
-  | 'screen.inbox'
-  | 'screen.board'
   | 'screen.offers'
   | 'screen.stats'
+// Ukryte ekrany (inbox, board) — do rozwinięcia później.
 
 export const DEFAULT_SHORTCUTS: Record<ShortcutAction, string> = {
   quickAdd: 'ctrl+shift+space',
   session: 'ctrl+t',
   'screen.tasks': 'ctrl+1',
-  'screen.inbox': 'ctrl+2',
-  'screen.board': 'ctrl+3',
-  'screen.offers': 'ctrl+4',
-  'screen.stats': 'ctrl+5'
+  'screen.offers': 'ctrl+2',
+  'screen.stats': 'ctrl+3'
 }
 
 export const SHORTCUT_ACTIONS = Object.keys(DEFAULT_SHORTCUTS) as ShortcutAction[]

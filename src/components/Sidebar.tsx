@@ -14,14 +14,15 @@ interface NavDef {
 
 const MAIN_NAV: NavDef[] = [
   { key: 'tasks', icon: 'check-square', kbd: '⌃1' },
-  { key: 'inbox', icon: 'tray', kbd: '⌃2', badge: 7 },
-  { key: 'board', icon: 'columns', kbd: '⌃3' },
-  { key: 'offers', icon: 'briefcase', kbd: '⌃4' },
-  { key: 'stats', icon: 'chart-bar', kbd: '⌃5' }
+  // Ukryte na razie — do ewentualnego rozwinięcia później:
+  // { key: 'inbox', icon: 'tray', kbd: '⌃2', badge: 7 },
+  // { key: 'board', icon: 'columns', kbd: '⌃3' },
+  { key: 'offers', icon: 'briefcase', kbd: '⌃2' },
+  { key: 'stats', icon: 'chart-bar', kbd: '⌃3' }
 ]
 
 const FOOT_NAV: NavDef[] = [
-  { key: 'profile', icon: 'user' },
+  // { key: 'profile', icon: 'user' },  // ukryte na razie
   { key: 'settings', icon: 'gear' }
 ]
 

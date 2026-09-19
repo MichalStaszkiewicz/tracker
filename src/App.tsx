@@ -10,10 +10,10 @@ import { useSettingsCtx } from '@/settings-context'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import type { Area } from '@shared/types'
-import { Board } from '@/screens/Board'
+// import { Board } from '@/screens/Board' // ukryte na razie
 import { EntryDetail } from '@/screens/EntryDetail'
 import { Offers } from '@/screens/Offers'
-import { Profile } from '@/screens/Profile'
+// import { Profile } from '@/screens/Profile' // ukryte na razie
 import { Settings } from '@/screens/Settings'
 import { Stats } from '@/screens/Stats'
 import { Tasks } from '@/screens/Tasks'
@@ -46,8 +46,6 @@ export function App() {
 
   useHotkeys({
     [shortcuts['screen.tasks']]: () => navigate('tasks'),
-    [shortcuts['screen.inbox']]: () => navigate('inbox'),
-    [shortcuts['screen.board']]: () => navigate('board'),
     [shortcuts['screen.offers']]: () => navigate('offers'),
     [shortcuts['screen.stats']]: () => navigate('stats'),
     [shortcuts.quickAdd]: focusAdd,
@@ -67,7 +65,7 @@ export function App() {
     settings: 'gear'
   }
   const paletteActions: PaletteAction[] = [
-    ...(['tasks', 'inbox', 'board', 'offers', 'stats', 'profile', 'settings'] as NavKey[]).map((k) => ({
+    ...(['tasks', 'offers', 'stats', 'settings'] as NavKey[]).map((k) => ({
       id: `go.${k}`,
       icon: NAV_ICON[k],
       label: t(`nav.${k}` as StringKey),
@@ -83,16 +81,12 @@ export function App() {
       <EntryDetail key={openEntryId} id={openEntryId} onClose={() => setOpenEntryId(null)} onOpen={setOpenEntryId} />
     ) : screen === 'tasks' ? (
       <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} onOpenEntry={setOpenEntryId} />
-    ) : screen === 'board' ? (
-      <Board onOpenEntry={setOpenEntryId} />
     ) : screen === 'offers' ? (
       <Offers onOpenEntry={setOpenEntryId} />
     ) : screen === 'stats' ? (
       <Stats />
     ) : screen === 'settings' ? (
       <Settings />
-    ) : screen === 'profile' ? (
-      <Profile />
     ) : (
       <Placeholder screen={screen} />
     )
