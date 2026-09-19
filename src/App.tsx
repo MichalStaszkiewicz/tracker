@@ -7,6 +7,7 @@ import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useSettingsCtx } from '@/settings-context'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
+import { Profile } from '@/screens/Profile'
 import { Settings } from '@/screens/Settings'
 import { Tasks } from '@/screens/Tasks'
 
@@ -36,6 +37,8 @@ export function App() {
         <Tasks />
       ) : screen === 'settings' ? (
         <Settings />
+      ) : screen === 'profile' ? (
+        <Profile />
       ) : (
         <Placeholder screen={screen} />
       )}
