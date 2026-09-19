@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AppShell } from '@/components/AppShell'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
 import { useHotkeys } from '@/hooks/useHotkeys'
+import { useSettings } from '@/hooks/useSettings'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
+import { Settings } from '@/screens/Settings'
 import { Tasks } from '@/screens/Tasks'
 
 const SCREEN_BY_NUMBER: Record<string, NavKey> = {
@@ -19,6 +21,11 @@ const SCREEN_BY_NUMBER: Record<string, NavKey> = {
 export function App() {
   const [screen, setScreen] = useState<NavKey>('tasks')
   const areas = useAreas()
+  const { settings, set } = useSettings()
+  const { setLang } = useT()
+
+  // Język w SETTING → przełączany na żywo.
+  useEffect(() => setLang(settings.language), [settings.language, setLang])
 
   const focusAdd = () => {
     setScreen('tasks')
@@ -35,7 +42,13 @@ export function App() {
 
   return (
     <AppShell current={screen} onNavigate={setScreen} areas={areas}>
-      {screen === 'tasks' ? <Tasks /> : <Placeholder screen={screen} />}
+      {screen === 'tasks' ? (
+        <Tasks />
+      ) : screen === 'settings' ? (
+        <Settings settings={settings} set={set} />
+      ) : (
+        <Placeholder screen={screen} />
+      )}
     </AppShell>
   )
 }

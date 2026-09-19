@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import {
   ArrowElbowUpLeft, ArrowsLeftRight, Books, Briefcase, CaretDown, CaretRight,
-  ChartBar, Check, CheckCircle, CheckSquare, Columns, Cube, Funnel, Gear, Hash,
+  ChartBar, Check, CheckCircle, CheckSquare, Columns, Cube, FolderOpen, Funnel, Gear, Hash,
   LockKey, MagnifyingGlass, Minus, Note, Pause, Play, Plus, Square, Target,
   TerminalWindow, Timer, Tray, User, WarningCircle, X, type IconProps
 } from '@phosphor-icons/react'
@@ -19,6 +19,7 @@ const MAP: Record<string, ComponentType<IconProps>> = {
   'chart-bar': ChartBar,
   user: User,
   gear: Gear,
+  'folder-open': FolderOpen,
   'magnifying-glass': MagnifyingGlass,
   minus: Minus,
   square: Square,
