@@ -28,6 +28,9 @@ export function registerIpc(): void {
   ipcMain.on(IPC.dbOpenFolder, () => {
     void shell.openPath(getDbPaths().dbDir)
   })
+  ipcMain.on(IPC.externalOpen, (_e, url: string) => {
+    if (typeof url === 'string' && /^https?:\/\//i.test(url)) void shell.openExternal(url)
+  })
 
   ipcMain.on(IPC.windowMinimize, (e) => BrowserWindow.fromWebContents(e.sender)?.minimize())
   ipcMain.on(IPC.windowMaximize, (e) => {

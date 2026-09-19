@@ -35,7 +35,8 @@ const api: TrackerApi = {
   },
   system: {
     dbPath: () => ipcRenderer.invoke(IPC.dbPath),
-    openDbFolder: () => ipcRenderer.send(IPC.dbOpenFolder)
+    openDbFolder: () => ipcRenderer.send(IPC.dbOpenFolder),
+    openExternal: (url) => ipcRenderer.send(IPC.externalOpen, url)
   }
 }
 

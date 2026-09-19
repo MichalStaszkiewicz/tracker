@@ -32,7 +32,8 @@ export const IPC = {
   settingsGetAll: 'settings:getAll',
   settingsSet: 'settings:set',
   dbPath: 'system:dbPath',
-  dbOpenFolder: 'system:openDbFolder'
+  dbOpenFolder: 'system:openDbFolder',
+  externalOpen: 'system:openExternal'
 } as const
 
 // Powierzchnia dostępna w rendererze jako window.tracker.
@@ -71,6 +72,7 @@ export interface TrackerApi {
   system: {
     dbPath(): Promise<string>
     openDbFolder(): void
+    openExternal(url: string): void
   }
 }
 

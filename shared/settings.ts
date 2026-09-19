@@ -1,3 +1,4 @@
+import { DEFAULT_PROFILE, type ProfileData } from './profile'
 import type { Lang } from './types'
 
 export interface AppSettings {
@@ -14,6 +15,7 @@ export interface AppSettings {
   askUnclosedSession: boolean
   countActiveWindowOnly: boolean
   backup: boolean
+  profile: ProfileData
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -29,7 +31,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoPause: true,
   askUnclosedSession: true,
   countActiveWindowOnly: false,
-  backup: true
+  backup: true,
+  profile: DEFAULT_PROFILE
 }
 
 /** Nakłada zapisane wartości na domyślne (nieznane klucze ignoruje). Czysta. */
