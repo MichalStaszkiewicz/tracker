@@ -7,9 +7,10 @@ import { Icon } from './Icon'
 interface Props {
   item: TaskListItem
   onToggle: (id: number) => void
+  onOpen?: (id: number) => void
 }
 
-export function TaskCard({ item, onToggle }: Props) {
+export function TaskCard({ item, onToggle, onOpen }: Props) {
   const { t } = useT()
   const [completing, setCompleting] = useState(false)
   const done = item.completedAt != null || item.stage?.isDone === true
@@ -30,12 +31,15 @@ export function TaskCard({ item, onToggle }: Props) {
   if (completing) cls.push('card--completing')
 
   return (
-    <div className={cls.join(' ')}>
+    <div className={cls.join(' ')} onClick={() => onOpen?.(item.id)}>
       <span className="card__bar" style={{ background: item.area?.color ?? 'var(--color-neutral-700)' }} />
       <button
         className={`card__check${showDone ? ' card__check--done' : ''}`}
         aria-label={done ? 'Cofnij' : 'Odhacz'}
-        onClick={handleCheck}
+        onClick={(e) => {
+          e.stopPropagation()
+          handleCheck()
+        }}
       >
         {showDone && <Icon name="check" size={11} />}
       </button>

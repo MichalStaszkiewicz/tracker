@@ -6,9 +6,10 @@ interface Props {
   item: TaskListItem
   onDragStart: (id: number) => void
   onDragEnd: () => void
+  onOpen?: (id: number) => void
 }
 
-export function BoardCard({ item, onDragStart, onDragEnd }: Props) {
+export function BoardCard({ item, onDragStart, onDragEnd, onOpen }: Props) {
   const progress = item.childProgress ?? item.counter
   const done = progress ? ('done' in progress ? progress.done : progress.current) : 0
   const ratio = progress && progress.total > 0 ? Math.min(1, done / progress.total) : 0
@@ -24,6 +25,7 @@ export function BoardCard({ item, onDragStart, onDragEnd }: Props) {
         onDragStart(item.id)
       }}
       onDragEnd={onDragEnd}
+      onClick={() => onOpen?.(item.id)}
     >
       <span className="bcard__bar" style={{ background: item.area?.color ?? 'var(--color-neutral-700)' }} />
       <div className="bcard__body">

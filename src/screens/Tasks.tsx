@@ -21,9 +21,10 @@ import type { TaskFilter } from '@shared/types'
 interface Props {
   areaFilter?: { id: number; name: string } | null
   onClearArea?: () => void
+  onOpenEntry?: (id: number) => void
 }
 
-export function Tasks({ areaFilter, onClearArea }: Props) {
+export function Tasks({ areaFilter, onClearArea, onOpenEntry }: Props) {
   const { t, lang } = useT()
   const [filter, setFilter] = useState<TaskFilter>('active')
   const [typeKey, setTypeKey] = useState<string | undefined>()
@@ -110,7 +111,7 @@ export function Tasks({ areaFilter, onClearArea }: Props) {
           <div key={g.key} style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             <SectionHeader status={g.status} label={g.label ?? undefined} count={g.items.length} gap={i > 0} />
             {g.items.map((item) => (
-              <TaskCard key={item.id} item={item} onToggle={toggle} />
+              <TaskCard key={item.id} item={item} onToggle={toggle} onOpen={onOpenEntry} />
             ))}
           </div>
         ))}

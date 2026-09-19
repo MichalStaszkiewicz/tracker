@@ -10,7 +10,7 @@ import { useTags } from '@/hooks/useLookups'
 import { useT } from '@/i18n'
 import { filterTasks } from '@/lib/task-view'
 
-export function Board() {
+export function Board({ onOpenEntry }: { onOpenEntry?: (id: number) => void }) {
   const { t } = useT()
   const types = useBoardTypes()
   const [typeId, setTypeId] = useState<number | null>(null)
@@ -129,6 +129,7 @@ export function Board() {
                     item={item}
                     onDragStart={() => undefined}
                     onDragEnd={() => setOverStage(null)}
+                    onOpen={onOpenEntry}
                   />
                 ))}
                 {col.length === 0 && <div className="bcol__drop">{t('board.dropHere')}</div>}

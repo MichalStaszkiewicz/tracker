@@ -324,6 +324,48 @@ button { font-family: var(--font-body); }
 
 .loading { display: grid; place-items: center; flex: 1; color: var(--color-neutral-500); font: 400 12px var(--mono); }
 
+/* --- Entry detail --- */
+.screen.detail { overflow-y: auto; gap: 16px; }
+.detail__head { display: flex; align-items: center; gap: 12px; }
+.detail__title { flex: 1; min-width: 0; }
+.detail__area { display: inline-flex; align-items: center; gap: 7px; font: 400 11px var(--mono); color: var(--color-neutral-400); flex: none; }
+.stagepath { display: flex; flex-wrap: wrap; gap: 2px; }
+.stagepath__step { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 13px; border: 0; border-radius: 7px; background: transparent; font-size: 12.5px; color: var(--color-neutral-500); cursor: pointer; }
+.stagepath__step:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); color: var(--color-text); }
+.stagepath__step--active { background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent-100); box-shadow: inset 0 0 0 1px var(--color-accent-600); }
+.tabs { display: flex; gap: 22px; background: var(--hair) no-repeat bottom / 100% 1px; }
+.tab { display: inline-flex; align-items: center; gap: 7px; padding: 7px 0 10px; border: 0; background: transparent; font-size: 13px; color: var(--color-neutral-400); cursor: pointer; }
+.tab:hover { color: var(--color-text); }
+.tab--active { color: var(--color-text); box-shadow: inset 0 -1.5px 0 var(--color-accent); }
+.tab__count { font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
+.detail__body { display: flex; flex-direction: column; padding-bottom: 40px; }
+.detail__col { display: flex; flex-direction: column; gap: 20px; max-width: 680px; }
+.detail__section { display: flex; flex-direction: column; gap: 2px; }
+.detail__sectionlabel { font: 400 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500); padding-bottom: 6px; }
+.subrow { display: flex; align-items: center; gap: 11px; height: 34px; padding: 0 8px; border: 0; background: transparent; border-radius: 7px; width: 100%; text-align: left; cursor: pointer; color: var(--color-text); }
+.subrow:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.subrow__check { width: 15px; height: 15px; border-radius: 5px; flex: none; display: grid; place-items: center; box-shadow: inset 0 0 0 1.4px var(--color-neutral-600); color: transparent; }
+.subrow__check--done { background: var(--color-accent); box-shadow: none; color: var(--color-bg); }
+.subrow__title { font-size: 13.5px; }
+.detail__notes { max-width: 680px; min-height: 280px; }
+.detail__time { font: 500 30px var(--mono); letter-spacing: -0.035em; }
+
+.tf { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px 40px; max-width: 680px; }
+.tf__row { display: flex; flex-direction: column; gap: 7px; }
+.tf__row--inline { flex-direction: row; align-items: center; justify-content: space-between; }
+.tf__label { font: 400 10px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-neutral-500); }
+.tf__empty { font-size: 12.5px; color: var(--color-neutral-500); }
+.pinput--mono { font-family: var(--mono); font-size: 13px; }
+
+.linkrow2 { display: flex; align-items: center; gap: 8px; background: var(--hair) no-repeat bottom / 100% 1px; }
+.linkrow2__open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 4px; border: 0; background: transparent; cursor: pointer; text-align: left; color: var(--color-text); }
+.linkrow2__open:hover { background: color-mix(in srgb, var(--color-text) 3%, transparent); }
+.linkrow2__open > :first-child { color: var(--color-neutral-400); flex: none; }
+.linkrow2__label { font-size: 13px; flex: none; width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linkrow2__target { font: 400 11.5px var(--mono); color: var(--color-neutral-500); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linkadd { display: flex; align-items: center; gap: 8px; padding-top: 12px; }
+.linkadd .pinput--sm { flex: 1; min-width: 0; }
+
 /* --- Board --- */
 .board__switch { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 14px; background: var(--hair) no-repeat bottom / 100% 1px; }
 .board__cols { flex: 1; min-height: 0; display: flex; gap: 16px; overflow-x: auto; overflow-y: hidden; padding-bottom: 8px; }

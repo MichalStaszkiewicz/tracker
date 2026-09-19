@@ -9,6 +9,7 @@ import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import type { Area } from '@shared/types'
 import { Board } from '@/screens/Board'
+import { EntryDetail } from '@/screens/EntryDetail'
 import { Profile } from '@/screens/Profile'
 import { Settings } from '@/screens/Settings'
 import { Stats } from '@/screens/Stats'
@@ -17,20 +18,23 @@ import { Tasks } from '@/screens/Tasks'
 export function App() {
   const [screen, setScreen] = useState<NavKey>('tasks')
   const [taskArea, setTaskArea] = useState<{ id: number; name: string } | null>(null)
+  const [openEntryId, setOpenEntryId] = useState<number | null>(null)
   const areas = useAreas()
   const { shortcuts } = useSettingsCtx()
 
   const navigate = (key: NavKey) => {
-    if (key === 'tasks') setTaskArea(null) // pełna lista Zadań
+    setOpenEntryId(null)
+    if (key === 'tasks') setTaskArea(null)
     setScreen(key)
   }
   const selectArea = (area: Area) => {
+    setOpenEntryId(null)
     setTaskArea({ id: area.id, name: area.name })
     setScreen('tasks')
   }
-
   const focusAdd = () => {
-    setTaskArea(null) // globalny quick-add → pełna lista, nie nieświeży folder
+    setOpenEntryId(null)
+    setTaskArea(null)
     setScreen('tasks')
     requestQuickAddFocus()
   }
@@ -45,27 +49,37 @@ export function App() {
     'ctrl+arrowup': focusAdd
   })
 
+  const content =
+    openEntryId !== null ? (
+      <EntryDetail
+        key={openEntryId}
+        id={openEntryId}
+        onClose={() => setOpenEntryId(null)}
+        onOpen={setOpenEntryId}
+      />
+    ) : screen === 'tasks' ? (
+      <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} onOpenEntry={setOpenEntryId} />
+    ) : screen === 'board' ? (
+      <Board onOpenEntry={setOpenEntryId} />
+    ) : screen === 'stats' ? (
+      <Stats />
+    ) : screen === 'settings' ? (
+      <Settings />
+    ) : screen === 'profile' ? (
+      <Profile />
+    ) : (
+      <Placeholder screen={screen} />
+    )
+
   return (
     <AppShell
       current={screen}
       onNavigate={navigate}
       areas={areas}
-      activeAreaId={screen === 'tasks' ? taskArea?.id ?? null : null}
+      activeAreaId={screen === 'tasks' && openEntryId === null ? taskArea?.id ?? null : null}
       onAreaSelect={selectArea}
     >
-      {screen === 'tasks' ? (
-        <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} />
-      ) : screen === 'board' ? (
-        <Board />
-      ) : screen === 'stats' ? (
-        <Stats />
-      ) : screen === 'settings' ? (
-        <Settings />
-      ) : screen === 'profile' ? (
-        <Profile />
-      ) : (
-        <Placeholder screen={screen} />
-      )}
+      {content}
     </AppShell>
   )
 }
