@@ -48,4 +48,10 @@ describe('normalizeUrl', () => {
   it('urlHost zwraca domenę', () => {
     expect(urlHost('https://nofluffjobs.com/pl/job/abc')).toBe('nofluffjobs.com')
   })
+  it('zachowuje istotny parametr query (różne oferty ≠ duplikat)', () => {
+    expect(normalizeUrl('https://example.com/job?id=1')).not.toBe(normalizeUrl('https://example.com/job?id=2'))
+  })
+  it('usuwa parametry śledzące, zachowuje resztę', () => {
+    expect(normalizeUrl('https://x.com/a?utm_source=li&gclid=9&id=5')).toBe('x.com/a?id=5')
+  })
 })

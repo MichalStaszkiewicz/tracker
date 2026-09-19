@@ -29,7 +29,10 @@ export function listOffers(db: DB): OfferRow[] {
         createdAt: e.createdAt
       }
     })
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .sort((a, b) => {
+      if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? 1 : -1
+      return b.id - a.id // stały tiebreak dla identycznych znaczników czasu
+    })
 }
 
 function categorize(existing: Set<string>, offers: ImportOffer[]): ImportPreview {
@@ -78,24 +81,27 @@ export function commitImport(db: DB, offers: ImportOffer[], now: Date = new Date
   const iso = now.toISOString()
 
   const { newItems } = categorize(existingUrls(db), offers)
-  for (const o of newItems) {
-    const data: Record<string, unknown> = {}
-    if (o.company) data.company = o.company
-    if (o.url) data.url = o.url
-    if (o.workMode) data.work_mode = o.workMode
-    if (o.salary) data.salary = o.salary
-    if (o.location) data.location = o.location
-    db.insert(entries)
-      .values({
-        typeId: type.id,
-        areaId: workArea?.id ?? null,
-        stageId: firstStage?.id ?? null,
-        title: (o.position || o.company || 'Oferta').trim(),
-        data,
-        createdAt: iso,
-        updatedAt: iso
-      })
-      .run()
-  }
+  // Atomowo: albo wchodzą wszystkie nowe, albo żadna (bez połowicznego importu).
+  db.transaction((tx) => {
+    for (const o of newItems) {
+      const data: Record<string, unknown> = {}
+      if (o.company) data.company = o.company
+      if (o.url) data.url = o.url
+      if (o.workMode) data.work_mode = o.workMode
+      if (o.salary) data.salary = o.salary
+      if (o.location) data.location = o.location
+      tx.insert(entries)
+        .values({
+          typeId: type.id,
+          areaId: workArea?.id ?? null,
+          stageId: firstStage?.id ?? null,
+          title: (o.position || o.company || 'Oferta').trim(),
+          data,
+          createdAt: iso,
+          updatedAt: iso
+        })
+        .run()
+    }
+  })
   return { imported: newItems.length }
 }

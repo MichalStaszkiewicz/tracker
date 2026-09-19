@@ -6,6 +6,7 @@ import { ScreenHeader } from '@/components/ScreenHeader'
 import { useOffers } from '@/hooks/useOffers'
 import { useT } from '@/i18n'
 import { shortDate } from '@/lib/format'
+import { salaryValue } from '@/lib/salary'
 
 type Sort = 'added' | 'salary'
 
@@ -22,7 +23,11 @@ export function Offers({ onOpenEntry }: { onOpenEntry?: (id: number) => void }) 
       ? offers.filter((o) => `${o.company} ${o.position} ${o.location} ${o.source}`.toLowerCase().includes(q))
       : offers
     return [...filtered].sort((a, b) =>
-      sort === 'salary' ? b.salary.localeCompare(a.salary) : a.createdAt < b.createdAt ? 1 : -1
+      sort === 'salary'
+        ? salaryValue(b.salary) - salaryValue(a.salary)
+        : a.createdAt < b.createdAt
+          ? 1
+          : -1
     )
   }, [offers, query, sort])
 
