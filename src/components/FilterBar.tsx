@@ -21,6 +21,8 @@ interface Props {
   onTagId: (id?: number) => void
   onQuery: (q: string) => void
   onGroupBy: (g: GroupBy) => void
+  areaName?: string | null
+  onClearArea?: () => void
 }
 
 export function FilterBar(props: Props) {
@@ -42,6 +44,16 @@ export function FilterBar(props: Props) {
 
   return (
     <div className="filterbar">
+      {props.areaName && (
+        <>
+          <button className="chip chip--active" onClick={props.onClearArea}>
+            <Icon name="cube" size={12} />
+            {props.areaName}
+            <Icon name="x" size={11} />
+          </button>
+          <span className="filterbar__sep" />
+        </>
+      )}
       {FILTERS.map((f) => (
         <button
           key={f}

@@ -6,13 +6,15 @@ export type GroupBy = 'status' | 'area' | 'type'
 export interface TaskFilters {
   typeKey?: string
   tagId?: number
+  areaId?: number
   query?: string
 }
 
-/** Zawężenie listy po typie, tagu i tekście — czyste, po stronie renderera. */
+/** Zawężenie listy po obszarze, typie, tagu i tekście — czyste, po stronie renderera. */
 export function filterTasks(tasks: TaskListItem[], f: TaskFilters): TaskListItem[] {
   const q = f.query?.trim().toLowerCase()
   return tasks.filter((it) => {
+    if (f.areaId != null && it.area?.id !== f.areaId) return false
     if (f.typeKey && it.type.key !== f.typeKey) return false
     if (f.tagId != null && !it.tags.some((t) => t.id === f.tagId)) return false
     if (q && !it.title.toLowerCase().includes(q)) return false

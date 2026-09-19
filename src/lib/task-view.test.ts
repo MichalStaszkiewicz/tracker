@@ -37,6 +37,13 @@ describe('filterTasks', () => {
   it('filtruje po tagu', () => {
     expect(filterTasks(tasks, { tagId: 8 }).map((t) => t.id)).toEqual([2])
   })
+  it('filtruje po obszarze', () => {
+    const withArea = [
+      make({ id: 10, title: 'A', area: area(1, 'Alpha') }),
+      make({ id: 11, title: 'B', area: area(2, 'Beta') })
+    ]
+    expect(filterTasks(withArea, { areaId: 2 }).map((t) => t.id)).toEqual([11])
+  })
   it('filtruje po tekście (bez rozróżniania wielkości)', () => {
     expect(filterTasks(tasks, { query: 'gam' }).map((t) => t.id)).toEqual([3])
   })

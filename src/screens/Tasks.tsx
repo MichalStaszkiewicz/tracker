@@ -18,7 +18,12 @@ import { useSettingsCtx } from '@/settings-context'
 import { taskStatus } from '@shared/task-status'
 import type { TaskFilter } from '@shared/types'
 
-export function Tasks() {
+interface Props {
+  areaFilter?: { id: number; name: string } | null
+  onClearArea?: () => void
+}
+
+export function Tasks({ areaFilter, onClearArea }: Props) {
   const { t, lang } = useT()
   const [filter, setFilter] = useState<TaskFilter>('active')
   const [typeKey, setTypeKey] = useState<string | undefined>()
@@ -35,8 +40,8 @@ export function Tasks() {
   useHotkeys({ [shortcuts.session]: () => void session.toggle() })
 
   const filtered = useMemo(
-    () => filterTasks(tasks, { typeKey, tagId, query }),
-    [tasks, typeKey, tagId, query]
+    () => filterTasks(tasks, { areaId: areaFilter?.id, typeKey, tagId, query }),
+    [tasks, areaFilter, typeKey, tagId, query]
   )
   const groups = useMemo(() => groupTasks(filtered, groupBy), [filtered, groupBy])
   const activeCount = filtered.filter((it) => taskStatus(it) !== 'done').length
@@ -95,6 +100,8 @@ export function Tasks() {
         onTagId={setTagId}
         onQuery={setQuery}
         onGroupBy={setGroupBy}
+        areaName={areaFilter?.name ?? null}
+        onClearArea={onClearArea}
       />
 
       <div className="list">

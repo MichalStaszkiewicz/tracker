@@ -7,14 +7,25 @@ import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useSettingsCtx } from '@/settings-context'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
+import type { Area } from '@shared/types'
 import { Profile } from '@/screens/Profile'
 import { Settings } from '@/screens/Settings'
 import { Tasks } from '@/screens/Tasks'
 
 export function App() {
   const [screen, setScreen] = useState<NavKey>('tasks')
+  const [taskArea, setTaskArea] = useState<{ id: number; name: string } | null>(null)
   const areas = useAreas()
   const { shortcuts } = useSettingsCtx()
+
+  const navigate = (key: NavKey) => {
+    if (key === 'tasks') setTaskArea(null) // pełna lista Zadań
+    setScreen(key)
+  }
+  const selectArea = (area: Area) => {
+    setTaskArea({ id: area.id, name: area.name })
+    setScreen('tasks')
+  }
 
   const focusAdd = () => {
     setScreen('tasks')
@@ -22,19 +33,25 @@ export function App() {
   }
 
   useHotkeys({
-    [shortcuts['screen.tasks']]: () => setScreen('tasks'),
-    [shortcuts['screen.inbox']]: () => setScreen('inbox'),
-    [shortcuts['screen.board']]: () => setScreen('board'),
-    [shortcuts['screen.offers']]: () => setScreen('offers'),
-    [shortcuts['screen.stats']]: () => setScreen('stats'),
+    [shortcuts['screen.tasks']]: () => navigate('tasks'),
+    [shortcuts['screen.inbox']]: () => navigate('inbox'),
+    [shortcuts['screen.board']]: () => navigate('board'),
+    [shortcuts['screen.offers']]: () => navigate('offers'),
+    [shortcuts['screen.stats']]: () => navigate('stats'),
     [shortcuts.quickAdd]: focusAdd,
     'ctrl+arrowup': focusAdd
   })
 
   return (
-    <AppShell current={screen} onNavigate={setScreen} areas={areas}>
+    <AppShell
+      current={screen}
+      onNavigate={navigate}
+      areas={areas}
+      activeAreaId={screen === 'tasks' ? taskArea?.id ?? null : null}
+      onAreaSelect={selectArea}
+    >
       {screen === 'tasks' ? (
-        <Tasks />
+        <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} />
       ) : screen === 'settings' ? (
         <Settings />
       ) : screen === 'profile' ? (

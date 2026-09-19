@@ -29,9 +29,11 @@ interface Props {
   current: NavKey
   onNavigate: (key: NavKey) => void
   areas: Area[]
+  activeAreaId?: number | null
+  onAreaSelect: (area: Area) => void
 }
 
-export function Sidebar({ current, onNavigate, areas }: Props) {
+export function Sidebar({ current, onNavigate, areas, activeAreaId, onAreaSelect }: Props) {
   const { t } = useT()
 
   const item = (def: NavDef) => (
@@ -54,10 +56,15 @@ export function Sidebar({ current, onNavigate, areas }: Props) {
       <div className="sidebar__sep" />
       <div className="sidebar__label">{t('nav.areas')}</div>
       {areas.map((a) => (
-        <div className="areaitem" key={a.id}>
+        <button
+          type="button"
+          className={`areaitem${a.id === activeAreaId ? ' areaitem--active' : ''}`}
+          key={a.id}
+          onClick={() => onAreaSelect(a)}
+        >
           <span className="areadot" style={{ background: a.color }} />
           {a.name}
-        </div>
+        </button>
       ))}
       <div className="sidebar__foot">{FOOT_NAV.map(item)}</div>
     </nav>
