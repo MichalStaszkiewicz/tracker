@@ -45,6 +45,11 @@ const api: TrackerApi = {
   stats: {
     get: (period) => ipcRenderer.invoke(IPC.statsGet, period)
   },
+  offers: {
+    list: () => ipcRenderer.invoke(IPC.offersList),
+    preview: (offers) => ipcRenderer.invoke(IPC.offersPreview, offers),
+    commit: (offers) => ipcRenderer.invoke(IPC.offersCommit, offers)
+  },
   settings: {
     getAll: () => ipcRenderer.invoke(IPC.settingsGetAll),
     set: (key, value) => ipcRenderer.invoke(IPC.settingsSet, key, value)

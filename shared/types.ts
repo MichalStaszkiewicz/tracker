@@ -123,6 +123,35 @@ export interface EntrySearchResult {
   subtitle: string
 }
 
+/** Wiersz tabeli ofert (wpis typu offer, spłaszczony do wyświetlenia). */
+export interface OfferRow {
+  id: number
+  company: string
+  position: string
+  salary: string
+  workMode: string
+  location: string
+  source: string
+  url: string
+  createdAt: string
+}
+
+/** Oferta z importu (po zmapowaniu kolumn CSV). */
+export interface ImportOffer {
+  company?: string
+  position?: string
+  salary?: string
+  workMode?: string
+  location?: string
+  url?: string
+}
+
+export interface ImportPreview {
+  newItems: ImportOffer[]
+  duplicates: ImportOffer[]
+  errors: { offer: ImportOffer; reason: string }[]
+}
+
 /** Lekki kandydat na rodzica do podpowiedzi w szybkim dodawaniu. */
 export interface ParentCandidate {
   id: number

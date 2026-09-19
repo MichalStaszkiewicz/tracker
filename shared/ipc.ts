@@ -8,7 +8,10 @@ import type {
   EntryPatch,
   EntrySearchResult,
   EntryType,
+  ImportOffer,
+  ImportPreview,
   Link,
+  OfferRow,
   ParentCandidate,
   SessionActive,
   StatsPeriod,
@@ -48,6 +51,10 @@ export const IPC = {
   sessionStop: 'session:stop',
 
   statsGet: 'stats:get',
+
+  offersList: 'offers:list',
+  offersPreview: 'offers:preview',
+  offersCommit: 'offers:commit',
 
   settingsGetAll: 'settings:getAll',
   settingsSet: 'settings:set',
@@ -102,6 +109,11 @@ export interface TrackerApi {
   }
   stats: {
     get(period: StatsPeriod): Promise<StatsView>
+  }
+  offers: {
+    list(): Promise<OfferRow[]>
+    preview(offers: ImportOffer[]): Promise<ImportPreview>
+    commit(offers: ImportOffer[]): Promise<{ imported: number }>
   }
   settings: {
     getAll(): Promise<Record<string, unknown>>

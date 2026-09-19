@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
-import type { EntryPatch, StatsPeriod, TaskFilter } from '@shared/types'
+import type { EntryPatch, ImportOffer, StatsPeriod, TaskFilter } from '@shared/types'
 import { listAreas } from '@core/repositories/areas'
 import { listBoardTypes, listTypes } from '@core/repositories/types'
 import { addTagToEntry, listTags, removeTagFromEntry } from '@core/repositories/tags'
@@ -18,6 +18,7 @@ import {
 } from '@core/repositories/entries'
 import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
 import { getStats } from '@core/repositories/stats'
+import { commitImport, listOffers, previewImport } from '@core/repositories/offers'
 import { getAllSettings, setSetting } from '@core/repositories/settings'
 import { getDb, getDbPaths } from '../db'
 
@@ -56,6 +57,10 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.sessionStop, () => stopSession(getDb()))
 
   ipcMain.handle(IPC.statsGet, (_e, period: StatsPeriod) => getStats(getDb(), period))
+
+  ipcMain.handle(IPC.offersList, () => listOffers(getDb()))
+  ipcMain.handle(IPC.offersPreview, (_e, offers: ImportOffer[]) => previewImport(getDb(), offers))
+  ipcMain.handle(IPC.offersCommit, (_e, offers: ImportOffer[]) => commitImport(getDb(), offers))
 
   ipcMain.handle(IPC.settingsGetAll, () => getAllSettings(getDb()))
   ipcMain.handle(IPC.settingsSet, (_e, key: string, value: unknown) => setSetting(getDb(), key, value))

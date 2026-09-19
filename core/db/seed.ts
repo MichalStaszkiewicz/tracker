@@ -56,7 +56,9 @@ const STARTER_TYPES: SeedType[] = [
     fields: [
       { key: 'company', label: 'Firma', type: 'text' },
       { key: 'url', label: 'URL', type: 'url' },
+      { key: 'salary', label: 'Widełki', type: 'text' },
       { key: 'work_mode', label: 'Tryb pracy', type: 'select', options: ['zdalnie', 'hybryda', 'stacjonarnie'] },
+      { key: 'location', label: 'Lokalizacja', type: 'text' },
       { key: 'company_model', label: 'Model firmy', type: 'select', options: ['in-house', 'software house', 'body leasing'] },
       { key: 'stack_fit', label: 'Dopasowanie stacku', type: 'number' }
     ],
@@ -176,6 +178,11 @@ export function seed(db: DB, now: Date = new Date()): void {
 
   // Zrobione dziś
   insertEntry({ typeKey: 'task', title: 'Tabela sekcji', parentId: parserPe, areaName: 'C++ / Windows', stageName: 'Zrobione', completedAt: iso(now) })
+
+  // Oferty (typ offer, obszar Praca)
+  insertEntry({ typeKey: 'offer', title: 'Fullstack Developer (React/Nest)', areaName: 'Praca', stageName: 'Wysłana', data: { company: 'Nordwind Labs', url: 'https://justjoin.it/offer/nordwind-fullstack', salary: '20–26k', work_mode: 'zdalnie', location: 'Warszawa', company_model: 'in-house', stack_fit: 4 } })
+  insertEntry({ typeKey: 'offer', title: 'React Native Developer', areaName: 'Praca', stageName: 'Rozmowa', data: { company: 'Baltic Freight Systems', url: 'https://nofluffjobs.com/job/baltic-rn', salary: '18–23k', work_mode: 'hybryda', location: 'Gdańsk', company_model: 'in-house', stack_fit: 3 } })
+  insertEntry({ typeKey: 'offer', title: 'Node.js Developer', areaName: 'Praca', stageName: 'Zapisana', data: { company: 'Kopernik Data', url: 'https://pracuj.pl/oferta/kopernik-node', work_mode: 'zdalnie', company_model: 'software house', stack_fit: 3 } })
 
   // Sesje: aktywna na IAT + zakończone dające czas
   db.insert(sessions).values({ entryId: iat, startedAt: iso(addMinutes(now, -42)), endedAt: null, note: null }).run()
