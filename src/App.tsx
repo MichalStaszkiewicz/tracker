@@ -30,6 +30,7 @@ export function App() {
   }
 
   const focusAdd = () => {
+    setTaskArea(null) // globalny quick-add → pełna lista, nie nieświeży folder
     setScreen('tasks')
     requestQuickAddFocus()
   }

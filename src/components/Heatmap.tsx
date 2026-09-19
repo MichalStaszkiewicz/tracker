@@ -1,9 +1,11 @@
+// Intensywność jako udział akcentu na tle powierzchni — czyta się poprawnie
+// niezależnie od motywu i wybranego koloru akcentu (nie zależy od jasności rampy).
 const COLORS = [
   'var(--color-neutral-900)',
-  'var(--color-accent-800)',
-  'var(--color-accent-600)',
-  'var(--color-accent-400)',
-  'var(--color-accent-200)'
+  'color-mix(in srgb, var(--color-accent) 28%, var(--color-surface))',
+  'color-mix(in srgb, var(--color-accent) 50%, var(--color-surface))',
+  'color-mix(in srgb, var(--color-accent) 74%, var(--color-surface))',
+  'var(--color-accent)'
 ]
 
 interface Props {

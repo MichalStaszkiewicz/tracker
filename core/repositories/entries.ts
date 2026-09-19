@@ -264,8 +264,13 @@ export function toggleDone(db: DB, id: number, now: Date = new Date()): TaskList
   return updated
 }
 
-/** Szybkie dodawanie: surowa linia → nowy wpis. */
-export function quickAdd(db: DB, line: string, now: Date = new Date()): number {
+/** Szybkie dodawanie: surowa linia → nowy wpis. `ctx.areaId` = obszar z kontekstu (np. otwarty folder). */
+export function quickAdd(
+  db: DB,
+  line: string,
+  now: Date = new Date(),
+  ctx?: { areaId?: number | null }
+): number {
   const parsed = parseQuickAdd(line, now)
 
   const typeKey = parsed.typeKey ?? 'task'
@@ -296,6 +301,8 @@ export function quickAdd(db: DB, line: string, now: Date = new Date()): number {
       areaId = parent.areaId
     }
   }
+  // Bez rodzica: dziedzicz obszar z kontekstu (otwarty folder obszaru).
+  if (parentId == null && ctx?.areaId != null) areaId = ctx.areaId
 
   const inserted = db
     .insert(entries)

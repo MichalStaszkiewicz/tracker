@@ -69,7 +69,7 @@ export interface TrackerApi {
   }
   entries: {
     toggleDone(id: number): Promise<TaskListItem>
-    quickAdd(line: string): Promise<number>
+    quickAdd(line: string, ctx?: { areaId?: number | null }): Promise<number>
     parents(): Promise<ParentCandidate[]>
     setStage(id: number, stageId: number): Promise<TaskListItem>
   }

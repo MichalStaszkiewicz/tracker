@@ -12,6 +12,7 @@ import {
   toggleDone
 } from './entries'
 import { listTypes } from './types'
+import { listAreas } from './areas'
 // getTask nie potrzebuje `now` — buduje bieżący stan.
 
 const NOW = new Date(2026, 8, 18, 14, 0, 0) // pt 2026-09-18
@@ -132,5 +133,11 @@ describe('quickAdd', () => {
     const item = getTask(conn.db, id)
     expect(item?.parent?.title).toBe('Parser PE w C++')
     expect(item?.area?.name).toBe('C++ / Windows')
+  })
+
+  it('bez rodzica dziedziczy obszar z kontekstu (otwarty folder)', () => {
+    const sieci = listAreas(conn.db).find((a) => a.name === 'Sieci')!.id
+    const id = quickAdd(conn.db, 'Nowe zadanie sieciowe', NOW, { areaId: sieci })
+    expect(getTask(conn.db, id)?.area?.name).toBe('Sieci')
   })
 })

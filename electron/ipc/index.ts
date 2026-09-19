@@ -27,7 +27,9 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.boardTypes, () => listBoardTypes(getDb()))
   ipcMain.handle(IPC.boardView, (_e, typeId: number) => listBoard(getDb(), typeId))
   ipcMain.handle(IPC.entryToggleDone, (_e, id: number) => toggleDone(getDb(), id))
-  ipcMain.handle(IPC.entryQuickAdd, (_e, line: string) => quickAdd(getDb(), line))
+  ipcMain.handle(IPC.entryQuickAdd, (_e, line: string, ctx?: { areaId?: number | null }) =>
+    quickAdd(getDb(), line, new Date(), ctx)
+  )
   ipcMain.handle(IPC.entrySetStage, (_e, id: number, stageId: number) => setStage(getDb(), id, stageId))
   ipcMain.handle(IPC.sessionActive, () => activeSession(getDb()))
   ipcMain.handle(IPC.sessionStart, (_e, entryId: number | null) => startSession(getDb(), entryId))

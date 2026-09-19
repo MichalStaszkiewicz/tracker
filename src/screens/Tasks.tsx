@@ -57,7 +57,8 @@ export function Tasks({ areaFilter, onClearArea }: Props) {
   }
 
   const add = async (line: string) => {
-    await api.entries.quickAdd(line)
+    // W otwartym folderze obszaru nowe zadanie dziedziczy ten obszar (zostaje widoczne).
+    await api.entries.quickAdd(line, { areaId: areaFilter?.id })
     await Promise.all([refetch(), reloadTags()])
   }
 
