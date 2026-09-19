@@ -55,6 +55,8 @@ export const strings = {
     'card.today': 'dziś',
     'card.tomorrow': 'jutro',
     'card.overdue': '{n} dni po terminie',
+    'card.check': 'Odhacz',
+    'card.uncheck': 'Cofnij',
     'add.placeholder': 'Nowe zadanie',
     'add.hint': '/ typ · # tag · > rodzic · @ data',
     'session.label': 'sesja',
@@ -150,6 +152,7 @@ export const strings = {
     'detail.linkTarget': 'URL lub ścieżka',
     'detail.addTag': '+ tag (grupa:nazwa)',
     'detail.removeTag': 'Usuń tag',
+    'detail.changeType': 'Zmień typ',
     'link.url': 'URL',
     'link.file': 'Plik',
     'link.folder': 'Folder',
@@ -192,6 +195,8 @@ export const strings = {
     'area.color': 'kolor',
     'area.create': 'Utwórz',
     'area.cancel': 'Anuluj',
+    'area.none': 'Bez obszaru',
+    'area.change': 'Zmień obszar',
     'soon': 'wkrótce'
   },
   en: {
@@ -249,6 +254,8 @@ export const strings = {
     'card.today': 'today',
     'card.tomorrow': 'tomorrow',
     'card.overdue': '{n} days overdue',
+    'card.check': 'Check off',
+    'card.uncheck': 'Undo',
     'add.placeholder': 'New task',
     'add.hint': '/ type · # tag · > parent · @ date',
     'session.label': 'session',
@@ -344,6 +351,7 @@ export const strings = {
     'detail.linkTarget': 'URL or path',
     'detail.addTag': '+ tag (group:name)',
     'detail.removeTag': 'Remove tag',
+    'detail.changeType': 'Change type',
     'link.url': 'URL',
     'link.file': 'File',
     'link.folder': 'Folder',
@@ -386,6 +394,8 @@ export const strings = {
     'area.color': 'color',
     'area.create': 'Create',
     'area.cancel': 'Cancel',
+    'area.none': 'No area',
+    'area.change': 'Change area',
     'soon': 'soon'
   }
 } as const

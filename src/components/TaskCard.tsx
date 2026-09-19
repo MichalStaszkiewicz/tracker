@@ -13,6 +13,7 @@ interface Props {
 export function TaskCard({ item, onToggle, onOpen }: Props) {
   const { t } = useT()
   const [completing, setCompleting] = useState(false)
+  const [dragging, setDragging] = useState(false)
   const done = item.completedAt != null || item.stage?.isDone === true
   const showDone = done || completing
 
@@ -29,13 +30,26 @@ export function TaskCard({ item, onToggle, onOpen }: Props) {
   if (item.activeSession) cls.push('card--active')
   if (showDone) cls.push('card--done')
   if (completing) cls.push('card--completing')
+  if (dragging) cls.push('card--dragging')
 
   return (
-    <div className={cls.join(' ')} onClick={() => onOpen?.(item.id)}>
+    <div
+      className={cls.join(' ')}
+      draggable
+      onDragStart={(e) => {
+        // Dedykowany typ MIME — cele upuszczenia rozpoznają przeciąganie karty (nie dowolny tekst).
+        e.dataTransfer.setData('application/x-task-id', String(item.id))
+        e.dataTransfer.setData('text/plain', String(item.id))
+        e.dataTransfer.effectAllowed = 'move'
+        setDragging(true)
+      }}
+      onDragEnd={() => setDragging(false)}
+      onClick={() => onOpen?.(item.id)}
+    >
       <span className="card__bar" style={{ background: item.area?.color ?? 'var(--color-neutral-700)' }} />
       <button
         className={`card__check${showDone ? ' card__check--done' : ''}`}
-        aria-label={done ? 'Cofnij' : 'Odhacz'}
+        aria-label={done ? t('card.uncheck') : t('card.check')}
         onClick={(e) => {
           e.stopPropagation()
           handleCheck()

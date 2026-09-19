@@ -192,7 +192,8 @@ button { font-family: var(--font-body); }
 .areaitem { display: flex; align-items: center; gap: 9px; height: 27px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; width: 100%; text-align: left; font-size: 12.5px; font-family: inherit; color: var(--color-neutral-300); cursor: pointer; }
 .areaitem:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
 .areaitem--active { background: color-mix(in srgb, var(--color-accent) 11%, transparent); box-shadow: inset 2px 0 0 var(--color-accent); color: var(--color-text); }
-.areadot { width: 3px; height: 12px; border-radius: 2px; flex: none; }
+.areaitem--over { background: color-mix(in srgb, var(--color-accent) 14%, transparent); box-shadow: inset 0 0 0 1px var(--color-accent-700); color: var(--color-text); }
+.areadot { width: 3px; height: 12px; border-radius: 2px; flex: none; pointer-events: none; }
 .areaitem__count { margin-left: auto; font: 400 10px var(--mono); color: var(--color-neutral-500); }
 .sidebar__areahead { position: relative; display: flex; align-items: center; }
 .sidebar__addarea { margin-left: auto; margin-right: 6px; width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--color-neutral-500); cursor: pointer; }
@@ -251,6 +252,7 @@ button { font-family: var(--font-body); }
 .card--active:hover { box-shadow: inset 0 0 0 1px var(--color-accent-600); }
 .card--done { opacity: 0.62; }
 .card--done:hover { opacity: 1; }
+.card.card--dragging { opacity: 0.5; box-shadow: inset 0 0 0 1px var(--color-accent-700); cursor: grabbing; }
 .card--completing { animation: cardComplete 0.3s ease; }
 .card__bar { width: 3px; border-radius: 2px; flex: none; }
 .card__check { width: 16px; height: 16px; border-radius: 5px; flex: none; align-self: center; display: grid; place-items: center; border: 0; padding: 0; cursor: pointer; box-shadow: inset 0 0 0 1.4px var(--color-neutral-500); background: transparent; color: transparent; transition: background 0.18s ease, box-shadow 0.18s ease; }
@@ -399,6 +401,7 @@ button { font-family: var(--font-body); }
 .detail__head { display: flex; align-items: center; gap: 12px; }
 .detail__title { flex: 1; min-width: 0; }
 .detail__area { display: inline-flex; align-items: center; gap: 7px; font: 400 11px var(--mono); color: var(--color-neutral-400); flex: none; }
+.detail__areanone { color: var(--color-neutral-500); }
 .detail__tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .tag__x { display: inline-flex; align-items: center; margin-left: 4px; padding: 0; border: 0; background: transparent; color: inherit; opacity: 0.55; cursor: pointer; }
 .tag__x:hover { opacity: 1; }

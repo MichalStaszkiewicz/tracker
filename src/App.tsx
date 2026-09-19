@@ -26,6 +26,7 @@ export function App() {
   const [openEntryId, setOpenEntryId] = useState<number | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [addAreaOpen, setAddAreaOpen] = useState(false)
+  const [taskRefresh, setTaskRefresh] = useState(0)
   const { areas, reload: reloadAreas } = useAreas()
   const { shortcuts } = useSettingsCtx()
 
@@ -43,6 +44,15 @@ export function App() {
     setOpenEntryId(null)
     setTaskArea({ id: area.id, name: area.name })
     setScreen('tasks')
+  }
+  const dropTaskToArea = async (area: Area, taskId: number) => {
+    // Przeciągnięcie karty zadania na obszar → zmiana obszaru (reużywa api.entries.update).
+    try {
+      await api.entries.update(taskId, { areaId: area.id })
+      setTaskRefresh((n) => n + 1)
+    } catch {
+      // Nieudany zapis (np. wyścig) — nie zostawiamy połowicznie zmienionego UI.
+    }
   }
   const focusAdd = () => {
     setOpenEntryId(null)
@@ -89,7 +99,12 @@ export function App() {
     openEntryId !== null ? (
       <EntryDetail key={openEntryId} id={openEntryId} onClose={() => setOpenEntryId(null)} onOpen={setOpenEntryId} />
     ) : screen === 'tasks' ? (
-      <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} onOpenEntry={setOpenEntryId} />
+      <Tasks
+        areaFilter={taskArea}
+        onClearArea={() => setTaskArea(null)}
+        onOpenEntry={setOpenEntryId}
+        refreshToken={taskRefresh}
+      />
     ) : screen === 'offers' ? (
       <Offers onOpenEntry={setOpenEntryId} />
     ) : screen === 'stats' ? (
@@ -109,6 +124,7 @@ export function App() {
         activeAreaId={screen === 'tasks' && openEntryId === null ? taskArea?.id ?? null : null}
         onAreaSelect={selectArea}
         onAddArea={() => setAddAreaOpen(true)}
+        onAreaDrop={dropTaskToArea}
         onOpenPalette={() => setPaletteOpen(true)}
       >
         {content}
