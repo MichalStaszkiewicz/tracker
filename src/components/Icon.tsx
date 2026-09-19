@@ -2,9 +2,10 @@ import type { ComponentType } from 'react'
 import {
   ArrowElbowUpLeft, ArrowsLeftRight, ArrowUpRight, Books, Briefcase, CaretDown, CaretRight,
   ChartBar, Check, CheckCircle, CheckSquare, Columns, Cube, DiscordLogo, EnvelopeSimple,
-  FolderOpen, Funnel, Gear, GithubLogo, Globe, Hash, LinkedinLogo, LinkSimple, LockKey,
-  MagnifyingGlass, MapPin, Minus, Note, Pause, PencilSimple, Play, Plus, Square, Target,
-  TerminalWindow, Timer, Trash, Tray, User, WarningCircle, X, XLogo, type IconProps
+  Flame, FolderOpen, Funnel, Gear, GithubLogo, Globe, Hash, HourglassMedium, LinkedinLogo,
+  LinkSimple, LockKey, MagnifyingGlass, MapPin, Minus, Note, Notebook, Pause, PencilSimple,
+  Play, Plus, Square, Target, TerminalWindow, Timer, Trash, Tray, User, WarningCircle, X,
+  XLogo, type IconProps
 } from '@phosphor-icons/react'
 
 const MAP: Record<string, ComponentType<IconProps>> = {
@@ -49,7 +50,10 @@ const MAP: Record<string, ComponentType<IconProps>> = {
   'map-pin': MapPin,
   'envelope-simple': EnvelopeSimple,
   'pencil-simple': PencilSimple,
-  trash: Trash
+  trash: Trash,
+  flame: Flame,
+  hourglass: HourglassMedium,
+  notebook: Notebook
 }
 
 export function Icon({ name, size = 15 }: { name: string; size?: number }) {

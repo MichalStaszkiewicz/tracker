@@ -11,6 +11,7 @@ import type { Area } from '@shared/types'
 import { Board } from '@/screens/Board'
 import { Profile } from '@/screens/Profile'
 import { Settings } from '@/screens/Settings'
+import { Stats } from '@/screens/Stats'
 import { Tasks } from '@/screens/Tasks'
 
 export function App() {
@@ -55,6 +56,8 @@ export function App() {
         <Tasks areaFilter={taskArea} onClearArea={() => setTaskArea(null)} />
       ) : screen === 'board' ? (
         <Board />
+      ) : screen === 'stats' ? (
+        <Stats />
       ) : screen === 'settings' ? (
         <Settings />
       ) : screen === 'profile' ? (
