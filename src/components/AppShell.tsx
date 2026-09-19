@@ -16,7 +16,7 @@ export function AppShell({ current, onNavigate, areas, children }: Props) {
       <TitleBar />
       <div className="body">
         <Sidebar current={current} onNavigate={onNavigate} areas={areas} />
-        <main style={{ position: 'relative', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <main style={{ position: 'relative', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {children}
         </main>
       </div>
