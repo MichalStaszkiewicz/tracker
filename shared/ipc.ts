@@ -54,7 +54,8 @@ export const IPC = {
   dbPath: 'system:dbPath',
   dbOpenFolder: 'system:openDbFolder',
   externalOpen: 'system:openExternal',
-  openPath: 'system:openPath'
+  openPath: 'system:openPath',
+  paletteToggle: 'palette:toggle'
 } as const
 
 // Powierzchnia dostępna w rendererze jako window.tracker.
@@ -111,6 +112,8 @@ export interface TrackerApi {
     openDbFolder(): void
     openExternal(url: string): void
     openPath(path: string): void
+    /** Skrót Ctrl+K przechwycony w procesie głównym; zwraca funkcję wyrejestrowującą. */
+    onPaletteToggle(cb: () => void): () => void
   }
 }
 

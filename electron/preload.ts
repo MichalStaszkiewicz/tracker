@@ -53,7 +53,12 @@ const api: TrackerApi = {
     dbPath: () => ipcRenderer.invoke(IPC.dbPath),
     openDbFolder: () => ipcRenderer.send(IPC.dbOpenFolder),
     openExternal: (url) => ipcRenderer.send(IPC.externalOpen, url),
-    openPath: (path) => ipcRenderer.send(IPC.openPath, path)
+    openPath: (path) => ipcRenderer.send(IPC.openPath, path),
+    onPaletteToggle: (cb) => {
+      const handler = () => cb()
+      ipcRenderer.on(IPC.paletteToggle, handler)
+      return () => ipcRenderer.removeListener(IPC.paletteToggle, handler)
+    }
   }
 }
 

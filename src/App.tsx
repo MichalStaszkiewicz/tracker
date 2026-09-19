@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '@/api'
 import { AppShell } from '@/components/AppShell'
 import { CommandPalette, type PaletteAction } from '@/components/CommandPalette'
@@ -50,9 +50,11 @@ export function App() {
     [shortcuts['screen.offers']]: () => navigate('offers'),
     [shortcuts['screen.stats']]: () => navigate('stats'),
     [shortcuts.quickAdd]: focusAdd,
-    'ctrl+arrowup': focusAdd,
-    'ctrl+k': () => setPaletteOpen((o) => !o)
+    'ctrl+arrowup': focusAdd
   })
+
+  // Ctrl+K przychodzi z procesu głównego (before-input-event) — pewne w Electronie.
+  useEffect(() => api.system.onPaletteToggle(() => setPaletteOpen((o) => !o)), [])
 
   const NAV_ICON: Record<NavKey, string> = {
     tasks: 'check-square',

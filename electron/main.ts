@@ -1,5 +1,6 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, shell } from 'electron'
+import { IPC } from '@shared/ipc'
 import { initDb } from './db'
 import { registerIpc } from './ipc'
 
@@ -24,6 +25,20 @@ function createWindow(): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
+  })
+
+  // Ctrl+K bywa przechwytywany przez Chromium — łapiemy go w procesie głównym.
+  win.webContents.on('before-input-event', (event, input) => {
+    if (
+      input.type === 'keyDown' &&
+      (input.control || input.meta) &&
+      !input.alt &&
+      !input.shift &&
+      input.key.toLowerCase() === 'k'
+    ) {
+      event.preventDefault()
+      win.webContents.send(IPC.paletteToggle)
+    }
   })
 
   const devUrl = process.env['ELECTRON_RENDERER_URL']
