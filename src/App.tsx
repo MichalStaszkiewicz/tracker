@@ -1,31 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AppShell } from '@/components/AppShell'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
 import { useHotkeys } from '@/hooks/useHotkeys'
-import { useSettings } from '@/hooks/useSettings'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
+import { useSettingsCtx } from '@/settings-context'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import { Settings } from '@/screens/Settings'
 import { Tasks } from '@/screens/Tasks'
 
-const SCREEN_BY_NUMBER: Record<string, NavKey> = {
-  'ctrl+1': 'tasks',
-  'ctrl+2': 'inbox',
-  'ctrl+3': 'board',
-  'ctrl+4': 'offers',
-  'ctrl+5': 'stats'
-}
-
 export function App() {
   const [screen, setScreen] = useState<NavKey>('tasks')
   const areas = useAreas()
-  const { settings, set } = useSettings()
-  const { setLang } = useT()
-
-  // Język w SETTING → przełączany na żywo.
-  useEffect(() => setLang(settings.language), [settings.language, setLang])
+  const { shortcuts } = useSettingsCtx()
 
   const focusAdd = () => {
     setScreen('tasks')
@@ -33,10 +21,12 @@ export function App() {
   }
 
   useHotkeys({
-    ...Object.fromEntries(
-      Object.entries(SCREEN_BY_NUMBER).map(([combo, key]) => [combo, () => setScreen(key)])
-    ),
-    'ctrl+shift+space': focusAdd,
+    [shortcuts['screen.tasks']]: () => setScreen('tasks'),
+    [shortcuts['screen.inbox']]: () => setScreen('inbox'),
+    [shortcuts['screen.board']]: () => setScreen('board'),
+    [shortcuts['screen.offers']]: () => setScreen('offers'),
+    [shortcuts['screen.stats']]: () => setScreen('stats'),
+    [shortcuts.quickAdd]: focusAdd,
     'ctrl+arrowup': focusAdd
   })
 
@@ -45,7 +35,7 @@ export function App() {
       {screen === 'tasks' ? (
         <Tasks />
       ) : screen === 'settings' ? (
-        <Settings settings={settings} set={set} />
+        <Settings />
       ) : (
         <Placeholder screen={screen} />
       )}

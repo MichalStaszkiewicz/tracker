@@ -14,6 +14,7 @@ import { useTasks } from '@/hooks/useTasks'
 import { useT } from '@/i18n'
 import { filterTasks, groupTasks, type GroupBy } from '@/lib/task-view'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
+import { useSettingsCtx } from '@/settings-context'
 import { taskStatus } from '@shared/task-status'
 import type { TaskFilter } from '@shared/types'
 
@@ -29,8 +30,9 @@ export function Tasks() {
   const types = useTypes()
   const { tags, reload: reloadTags } = useTags()
   const session = useActiveSession()
+  const { shortcuts } = useSettingsCtx()
 
-  useHotkeys({ 'ctrl+t': () => void session.toggle() })
+  useHotkeys({ [shortcuts.session]: () => void session.toggle() })
 
   const filtered = useMemo(
     () => filterTasks(tasks, { typeKey, tagId, query }),
