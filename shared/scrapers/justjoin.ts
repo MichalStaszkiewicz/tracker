@@ -100,15 +100,20 @@ function asRawOffer(u: unknown): JustJoinRawOffer | null {
   }
 }
 
-/** Rozpakowuje odpowiedź API do surowych ofert + łącznej liczby wyników. */
-export function parseResponse(json: unknown): { offers: JustJoinRawOffer[]; total: number } {
+/**
+ * Rozpakowuje odpowiedź API. `rawCount` = liczba pozycji w data (do paginacji offsetem),
+ * `offers` = tylko poprawne (odsiane śmieci). `total` = Infinity, gdy meta brak — żeby brak
+ * meta nie ucinał paginacji do jednej strony (o zatrzymaniu decydują krótka/pusta strona i cap).
+ */
+export function parseResponse(json: unknown): { offers: JustJoinRawOffer[]; rawCount: number; total: number } {
   if (!isObj(json) || !Array.isArray(json.data)) {
     throw new Error('JustJoin: nieoczekiwany kształt odpowiedzi')
   }
+  const rawCount = json.data.length
   const offers = json.data.map(asRawOffer).filter((o): o is JustJoinRawOffer => o !== null)
   const meta = isObj(json.meta) ? json.meta : {}
-  const total = num(meta.totalItems) ?? offers.length
-  return { offers, total }
+  const total = num(meta.totalItems) ?? Number.POSITIVE_INFINITY
+  return { offers, rawCount, total }
 }
 
 // --- Mapowanie na ImportOffer ---
@@ -159,7 +164,9 @@ export function formatSalary(employmentTypes: RawEmployment[]): string {
       : groupThousands((pick.from ?? pick.to) as number)
   const contract = contractShort(pick.type)
   const gross = pick.gross ? 'brutto' : 'netto'
-  return `${range} ${pick.currency}/${unitShort(pick.unit)}${contract ? ` ${contract}` : ''} ${gross}`.trim()
+  const unit = unitShort(pick.unit)
+  const rate = unit ? `${pick.currency}/${unit}` : pick.currency // brak jednostki → bez wiszącego "/"
+  return `${range} ${rate}${contract ? ` ${contract}` : ''} ${gross}`.trim()
 }
 
 export function mapOffer(raw: JustJoinRawOffer): ImportOffer {

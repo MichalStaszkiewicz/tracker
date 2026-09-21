@@ -61,10 +61,76 @@ describe('fetchJustJoinOffers', () => {
     expect(offers).toHaveLength(2)
   })
 
-  it('rzuca przy błędzie HTTP', async () => {
+  it('rzuca przy błędzie HTTP, gdy nic jeszcze nie zebrano', async () => {
     const bad: FetchLike = async () => ({ ok: false, status: 403, json: async () => ({}) })
     await expect(
       fetchJustJoinOffers(CRITERIA, { fetch: bad, sleep: async () => {}, delayMs: 0 })
     ).rejects.toThrow(/403/)
+  })
+})
+
+// Fake fetch z surowych stron per kategoria (dane mogą zawierać śmieci; meta opcjonalne).
+const fetchFrom = (dataByCat: Record<string, unknown[]>, opts: { meta?: boolean } = {}): FetchLike => async (url) => {
+  const u = new URL(url)
+  const cat = u.searchParams.get('categories') ?? ''
+  const from = Number(u.searchParams.get('from') ?? '0')
+  const all = dataByCat[cat] ?? []
+  const body: Record<string, unknown> = { data: all.slice(from, from + 10) }
+  if (opts.meta !== false) body.meta = { totalItems: all.length }
+  return { ok: true, status: 200, json: async () => body }
+}
+
+const noKw: ScrapeCriteria = { categories: [], keywords: [], maxPerCategory: 100 }
+
+describe('fetchJustJoinOffers — regresje z przeglądu', () => {
+  it('śmieciowa pozycja na pełnej stronie NIE ucina paginacji (offset po rawCount)', async () => {
+    const data = [{ junk: true }, ...Array.from({ length: 24 }, (_, i) => raw('x', i, 'React'))] // 25 pozycji, 1 śmieć
+    const offers = await fetchJustJoinOffers(
+      { ...noKw, categories: ['x'] },
+      { fetch: fetchFrom({ x: data }), sleep: async () => {}, delayMs: 0 }
+    )
+    expect(offers).toHaveLength(24) // wszystkie poprawne, mimo śmiecia na stronie 1
+  })
+
+  it('brak meta.totalItems → paginuje aż do krótkiej strony (total = Infinity)', async () => {
+    const data = Array.from({ length: 15 }, (_, i) => raw('y', i, 'React'))
+    const offers = await fetchJustJoinOffers(
+      { ...noKw, categories: ['y'] },
+      { fetch: fetchFrom({ y: data }, { meta: false }), sleep: async () => {}, delayMs: 0 }
+    )
+    expect(offers).toHaveLength(15)
+  })
+
+  it('maxPerCategory ogranicza liczbę zmapowanych ofert (także nie-wielokrotność 10)', async () => {
+    const data = Array.from({ length: 30 }, (_, i) => raw('z', i, 'React'))
+    const offers = await fetchJustJoinOffers(
+      { ...noKw, categories: ['z'], maxPerCategory: 25 },
+      { fetch: fetchFrom({ z: data }), sleep: async () => {}, delayMs: 0 }
+    )
+    expect(offers).toHaveLength(25)
+  })
+
+  it('błąd HTTP na kolejnej kategorii zwraca oferty już zebrane (bez utraty przebiegu)', async () => {
+    const jsData = Array.from({ length: 5 }, (_, i) => raw('javascript', i, 'React'))
+    const partial: FetchLike = async (url) => {
+      const u = new URL(url)
+      if (u.searchParams.get('categories') === 'mobile') return { ok: false, status: 403, json: async () => ({}) }
+      const from = Number(u.searchParams.get('from') ?? '0')
+      return { ok: true, status: 200, json: async () => ({ data: jsData.slice(from, from + 10), meta: { totalItems: jsData.length } }) }
+    }
+    const offers = await fetchJustJoinOffers(
+      { ...noKw, categories: ['javascript', 'mobile'] },
+      { fetch: partial, sleep: async () => {}, delayMs: 0 }
+    )
+    expect(offers).toHaveLength(5)
+  })
+
+  it('rate-limit obejmuje granicę kategorii (jedno uśpienie między dwiema 1-stronicowymi kat.)', async () => {
+    const sleep = vi.fn(async () => {})
+    await fetchJustJoinOffers(
+      { ...noKw, categories: ['a', 'b'] },
+      { fetch: fetchFrom({ a: [raw('a', 0, 'React')], b: [raw('b', 0, 'React')] }), sleep, delayMs: 5 }
+    )
+    expect(sleep).toHaveBeenCalledTimes(1)
   })
 })

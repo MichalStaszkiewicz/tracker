@@ -81,6 +81,11 @@ describe('formatSalary', () => {
       '15 000 PLN/mies. UoP brutto'
     )
   })
+  it('brak jednostki → bez wiszącego ukośnika', () => {
+    expect(formatSalary([{ from: 20000, to: null, currency: 'PLN', currencySource: 'original', type: 'b2b', unit: '', gross: false }])).toBe(
+      '20 000 PLN B2B netto'
+    )
+  })
 })
 
 describe('mapWorkplaceType', () => {

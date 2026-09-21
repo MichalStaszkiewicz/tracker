@@ -35,29 +35,36 @@ export async function fetchJustJoinOffers(criteria: ScrapeCriteria, deps: FetchD
   const maxPerCategory = criteria.maxPerCategory ?? 100
 
   const byUrl = new Map<string, ImportOffer>()
+  let sentAny = false // throttling liczone dla całego przebiegu (także między kategoriami)
 
-  for (const category of criteria.categories) {
+  categories: for (const category of criteria.categories) {
     let from = 0
-    let firstOfCategory = true
     for (let req = 0; req < GUARD_MAX_REQUESTS; req++) {
-      if (!firstOfCategory) await sleep(delayMs)
-      firstOfCategory = false
+      if (from >= maxPerCategory) break
+      if (sentAny) await sleep(delayMs)
+      sentAny = true
 
       const url = JUSTJOIN_BASE + buildOffersPath({ category, from, experienceLevels: criteria.experienceLevels })
       const res = await doFetch(url, { headers: { accept: 'application/json', 'user-agent': UA } })
-      if (!res.ok) throw new Error(`JustJoin (${category}): HTTP ${res.status}`)
+      if (!res.ok) {
+        // Mamy już oferty z wcześniejszych stron/kategorii → zwróć je zamiast tracić cały przebieg.
+        if (byUrl.size > 0) break categories
+        throw new Error(`JustJoin (${category}): HTTP ${res.status}`)
+      }
 
-      const { offers, total } = parseResponse(await res.json())
-      if (offers.length === 0) break
+      // rawCount steruje paginacją (offset), offers to odsiane pozycje do zmapowania.
+      const { offers, rawCount, total } = parseResponse(await res.json())
+      if (rawCount === 0) break
 
-      for (const raw of offers) {
+      const room = maxPerCategory - from // nie przekraczaj deklarowanego capa kategorii
+      for (const raw of offers.slice(0, Math.max(0, room))) {
         if (!matchesKeywords(raw, criteria.keywords)) continue
         const offer = mapOffer(raw)
         if (offer.url) byUrl.set(offer.url, offer)
       }
 
-      from += offers.length
-      if (from >= total || from >= maxPerCategory || offers.length < PER_RESPONSE) break
+      from += rawCount
+      if (from >= total || from >= maxPerCategory || rawCount < PER_RESPONSE) break
     }
   }
 
