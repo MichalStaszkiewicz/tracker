@@ -274,13 +274,20 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
                 className="pinput pinput--sm"
                 placeholder={t('detail.linkLabel')}
                 value={newLink.label}
-                onChange={(e) => setNewLink((s) => ({ ...s, label: e.currentTarget.value }))}
+                onChange={(e) => {
+                  // Wartość czytamy synchronicznie: currentTarget jest null, gdy React odpali updater w renderze.
+                  const value = e.currentTarget.value
+                  setNewLink((s) => ({ ...s, label: value }))
+                }}
               />
               <input
                 className="pinput pinput--sm"
                 placeholder={t('detail.linkTarget')}
                 value={newLink.target}
-                onChange={(e) => setNewLink((s) => ({ ...s, target: e.currentTarget.value }))}
+                onChange={(e) => {
+                  const value = e.currentTarget.value
+                  setNewLink((s) => ({ ...s, target: value }))
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') void addLink()
                 }}
