@@ -394,6 +394,7 @@ button { font-family: var(--font-body); }
 .imp-sample__sal { font: 400 11px var(--mono); color: var(--color-neutral-300); }
 .scrape__state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 44px 20px; color: var(--color-neutral-400); font-size: 13px; text-align: center; }
 .scrape__state--err { color: var(--r-bad); }
+.scrape__banner { display: flex; align-items: center; gap: 8px; padding: 8px 11px; border-radius: 8px; background: color-mix(in srgb, var(--r-bad) 12%, transparent); color: var(--r-bad); font-size: 12.5px; }
 .importmodal__foot { display: flex; align-items: center; gap: 10px; padding: 14px 18px; background: var(--hair) no-repeat top / 100% 1px; }
 .importmodal__dedup { font: 400 11px var(--mono); color: var(--color-neutral-500); margin-right: auto; }
 .btn:disabled { opacity: 0.45; cursor: default; }

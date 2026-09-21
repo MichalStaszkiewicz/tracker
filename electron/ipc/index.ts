@@ -1,6 +1,14 @@
 import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
-import type { EntryPatch, ImportOffer, ScrapeCriteria, ScrapeSource, StatsPeriod, TaskFilter } from '@shared/types'
+import type {
+  EntryPatch,
+  ImportOffer,
+  ImportPreview,
+  ScrapeCriteria,
+  ScrapeSource,
+  StatsPeriod,
+  TaskFilter
+} from '@shared/types'
 import { createArea, listAreas } from '@core/repositories/areas'
 import { listBoardTypes, listTypes } from '@core/repositories/types'
 import { addTagToEntry, listTags, removeTagFromEntry } from '@core/repositories/tags'
@@ -24,6 +32,10 @@ import { fetchJustJoinOffers } from '@core/scraper/justjoin'
 import { DEFAULT_JUSTJOIN_CRITERIA } from '@shared/scrapers/justjoin'
 import { getAllSettings, setSetting } from '@core/repositories/settings'
 import { getDb, getDbPaths } from '../db'
+
+// Deduplikacja równoległych żądań scrapowania (np. podwójny efekt Reacta w StrictMode) —
+// to samo źródło+kryteria zwraca ten sam bieg zamiast odpalać drugi komplet zapytań do serwisu.
+const scrapeInFlight = new Map<string, Promise<ImportPreview>>()
 
 /** Rejestruje handlery IPC — kanały 1:1 z kontraktem shared/ipc.ts. */
 export function registerIpc(): void {
@@ -66,10 +78,16 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.offersList, () => listOffers(getDb()))
   ipcMain.handle(IPC.offersPreview, (_e, offers: ImportOffer[]) => previewImport(getDb(), offers))
   ipcMain.handle(IPC.offersCommit, (_e, offers: ImportOffer[]) => commitImport(getDb(), offers))
-  ipcMain.handle(IPC.offersScrape, async (_e, source: ScrapeSource, criteria?: ScrapeCriteria) => {
+  ipcMain.handle(IPC.offersScrape, (_e, source: ScrapeSource, criteria?: ScrapeCriteria) => {
     if (source !== 'justjoin') throw new Error(`Nieznane źródło ofert: ${source}`)
-    const offers = await fetchJustJoinOffers(criteria ?? DEFAULT_JUSTJOIN_CRITERIA)
-    return previewImport(getDb(), offers)
+    const key = `${source}:${JSON.stringify(criteria ?? null)}`
+    const existing = scrapeInFlight.get(key)
+    if (existing) return existing
+    const run = fetchJustJoinOffers(criteria ?? DEFAULT_JUSTJOIN_CRITERIA)
+      .then((offers) => previewImport(getDb(), offers))
+      .finally(() => scrapeInFlight.delete(key))
+    scrapeInFlight.set(key, run)
+    return run
   })
 
   ipcMain.handle(IPC.settingsGetAll, () => getAllSettings(getDb()))

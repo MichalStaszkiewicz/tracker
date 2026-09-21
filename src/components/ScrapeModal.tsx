@@ -14,6 +14,7 @@ export function ScrapeModal({ onClose, onImported }: Props) {
   const { t } = useT()
   const [preview, setPreview] = useState<ImportPreview | null>(null)
   const [error, setError] = useState(false)
+  const [importError, setImportError] = useState(false)
   const [importing, setImporting] = useState(false)
 
   useEffect(() => {
@@ -30,12 +31,13 @@ export function ScrapeModal({ onClose, onImported }: Props) {
   const doImport = async () => {
     if (!preview) return
     setImporting(true)
+    setImportError(false)
     try {
       const res = await api.offers.commit(preview.newItems)
       onImported(res.imported)
     } catch {
       setImporting(false)
-      setError(true)
+      setImportError(true) // porażka zapisu ≠ porażka pobrania — inny komunikat, podgląd zostaje
     }
   }
 
@@ -65,8 +67,14 @@ export function ScrapeModal({ onClose, onImported }: Props) {
               {t('scrape.error')}
             </div>
           )}
-          {preview && (
+          {preview && !error && (
             <>
+              {importError && (
+                <div className="scrape__banner">
+                  <Icon name="warning-circle" size={14} />
+                  {t('scrape.importError')}
+                </div>
+              )}
               <div className="importmodal__counts">
                 <span className="imp-chip imp-chip--new">
                   <Icon name="plus" size={12} />
