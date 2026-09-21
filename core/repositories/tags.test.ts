@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Connection } from '../db/connection'
 import { makeTestDb } from '../db/test-utils'
-import { seed } from '../db/seed'
+import { seedDemo } from '../db/seed'
 import { findOrCreateTag, listTags } from './tags'
 
 let conn: Connection
 beforeEach(() => {
   conn = makeTestDb()
-  seed(conn.db, new Date(2026, 8, 18))
+  seedDemo(conn.db, new Date(2026, 8, 18))
 })
 
 describe('listTags', () => {

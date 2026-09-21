@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Icon } from '@/components/Icon'
 import { ImportModal } from '@/components/ImportModal'
+import { ScrapeModal } from '@/components/ScrapeModal'
 import { Menu } from '@/components/Menu'
 import { ScreenHeader } from '@/components/ScreenHeader'
 import { useOffers } from '@/hooks/useOffers'
@@ -16,6 +17,7 @@ export function Offers({ onOpenEntry }: { onOpenEntry?: (id: number) => void }) 
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<Sort>('added')
   const [importing, setImporting] = useState(false)
+  const [scraping, setScraping] = useState(false)
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -37,10 +39,16 @@ export function Offers({ onOpenEntry }: { onOpenEntry?: (id: number) => void }) 
         eyebrow={t('offers.eyebrow', { count: offers.length })}
         title={t('nav.offers')}
         actions={
-          <button className="btn btn--accent" onClick={() => setImporting(true)}>
-            <Icon name="note" size={13} />
-            {t('offers.import')}
-          </button>
+          <>
+            <button className="btn btn--outline" onClick={() => setScraping(true)}>
+              <Icon name="briefcase" size={13} />
+              {t('offers.scrape')}
+            </button>
+            <button className="btn btn--accent" onClick={() => setImporting(true)}>
+              <Icon name="note" size={13} />
+              {t('offers.import')}
+            </button>
+          </>
         }
       />
 
@@ -97,6 +105,16 @@ export function Offers({ onOpenEntry }: { onOpenEntry?: (id: number) => void }) 
           onClose={() => setImporting(false)}
           onImported={() => {
             setImporting(false)
+            void refetch()
+          }}
+        />
+      )}
+
+      {scraping && (
+        <ScrapeModal
+          onClose={() => setScraping(false)}
+          onImported={() => {
+            setScraping(false)
             void refetch()
           }}
         />

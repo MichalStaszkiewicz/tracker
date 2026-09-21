@@ -152,6 +152,18 @@ export interface ImportPreview {
   errors: { offer: ImportOffer; reason: string }[]
 }
 
+/** Źródło scrapowania ofert. Zachowanie per-źródło mieszka w scraperach, nie w if-ach. */
+export type ScrapeSource = 'justjoin'
+
+/** Kryteria pobierania ofert ze źródła (kategorie serwisu + filtr po słowach kluczowych). */
+export interface ScrapeCriteria {
+  categories: string[]
+  keywords: string[]
+  experienceLevels?: string[]
+  /** Ile ofert maksymalnie przejrzeć na kategorię (przed filtrem słów kluczowych). */
+  maxPerCategory?: number
+}
+
 /** Lekki kandydat na rodzica do podpowiedzi w szybkim dodawaniu. */
 export interface ParentCandidate {
   id: number

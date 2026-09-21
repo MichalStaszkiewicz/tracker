@@ -3,7 +3,9 @@ import { api } from '@/api'
 import { Icon } from '@/components/Icon'
 import { Menu } from '@/components/Menu'
 import { TypeForm } from '@/components/TypeForm'
+import { useAreas } from '@/hooks/useAreas'
 import { useEntry } from '@/hooks/useEntry'
+import { useTypes } from '@/hooks/useLookups'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import { formatDuration } from '@/lib/format'
@@ -23,8 +25,12 @@ interface Props {
 export function EntryDetail({ id, onClose, onOpen }: Props) {
   const { t } = useT()
   const { detail, refetch } = useEntry(id)
+  const types = useTypes()
+  const { areas } = useAreas()
   const [tab, setTab] = useState<Tab>('details')
   const [newLink, setNewLink] = useState({ kind: 'url', label: '', target: '' })
+  const [tagInput, setTagInput] = useState('')
+  const [notesSaved, setNotesSaved] = useState(false)
 
   if (!detail) {
     return (
@@ -43,8 +49,37 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
     await api.entries.update(id, patch)
     await refetch()
   }
+  const saveNotes = async (value: string) => {
+    await commit({ descriptionMd: value })
+    setNotesSaved(true)
+  }
   const changeStage = async (stageId: number) => {
     await api.entries.setStage(id, stageId)
+    await refetch()
+  }
+  const changeType = async (typeId: number) => {
+    await api.entries.setType(id, typeId)
+    await refetch()
+  }
+  const changeArea = async (areaId: number | null) => {
+    // Klawiaturowa/klikalna alternatywa dla drag & drop (i jedyny sposób na wyczyszczenie obszaru).
+    await api.entries.update(id, { areaId })
+    await refetch()
+  }
+  const addTag = async () => {
+    const raw = tagInput.trim()
+    if (!raw) return
+    // Format "grupa:nazwa" — bez dwukropka trafia do grupy "inne".
+    const idx = raw.indexOf(':')
+    const group = idx > 0 ? raw.slice(0, idx).trim() : 'inne'
+    const name = (idx > 0 ? raw.slice(idx + 1) : raw).trim()
+    if (!name) return
+    await api.entries.addTag(id, group, name)
+    setTagInput('')
+    await refetch()
+  }
+  const removeTag = async (tagId: number) => {
+    await api.entries.removeTag(id, tagId)
     await refetch()
   }
   const addLink = async () => {
@@ -75,22 +110,63 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
         <button className="iconbtn" aria-label={t('detail.back')} onClick={onClose}>
           <Icon name="arrow-left" size={16} />
         </button>
-        <Icon name={detail.type.icon} size={18} />
+        <Menu
+          ariaLabel={t('detail.changeType')}
+          trigger={<Icon name={detail.type.icon} size={16} />}
+          items={types.map((ty) => ({ key: String(ty.id), label: ty.name, icon: ty.icon }))}
+          activeKey={String(detail.type.id)}
+          onSelect={(k) => void changeType(Number(k))}
+        />
         <input
           className="pinput pinput--lg detail__title"
           defaultValue={detail.title}
           onBlur={(e) => void commit({ title: e.currentTarget.value })}
         />
-        {detail.area && (
-          <span className="detail__area">
-            <span className="areadot" style={{ background: detail.area.color }} />
-            {detail.area.name}
-          </span>
-        )}
+        <Menu
+          align="right"
+          ariaLabel={t('area.change')}
+          trigger={
+            detail.area ? (
+              <>
+                <span className="areadot" style={{ background: detail.area.color }} />
+                {detail.area.name}
+              </>
+            ) : (
+              <span className="detail__areanone">{t('area.none')}</span>
+            )
+          }
+          items={[
+            { key: 'none', label: t('area.none') },
+            ...areas.map((a) => ({ key: String(a.id), label: a.name, dot: a.color }))
+          ]}
+          activeKey={detail.area ? String(detail.area.id) : 'none'}
+          onSelect={(k) => void changeArea(k === 'none' ? null : Number(k))}
+        />
         <button className="btn btn--outline" onClick={() => void api.sessions.start(id)}>
           <Icon name="timer" size={14} />
           {t('detail.session')}
         </button>
+      </div>
+
+      <div className="detail__tags">
+        {detail.tags.map((tag) => (
+          <span key={tag.id} className={`tag${tag.groupName === 'skill' ? ' tag--skill' : ''}`}>
+            <span className="tag__group">{tag.groupName}:</span>
+            {tag.name}
+            <button className="tag__x" aria-label={t('detail.removeTag')} onClick={() => void removeTag(tag.id)}>
+              <Icon name="x" size={10} />
+            </button>
+          </span>
+        ))}
+        <input
+          className="pinput pinput--sm detail__tagadd"
+          placeholder={t('detail.addTag')}
+          value={tagInput}
+          onChange={(e) => setTagInput(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void addTag()
+          }}
+        />
       </div>
 
       {detail.stages.length > 0 && (
@@ -144,12 +220,31 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
         )}
 
         {tab === 'notes' && (
-          <textarea
-            className="pinput pinput--area detail__notes"
-            defaultValue={detail.descriptionMd}
-            placeholder={t('detail.notesPlaceholder')}
-            onBlur={(e) => void commit({ descriptionMd: e.currentTarget.value })}
-          />
+          <div className="detail__noteswrap">
+            <textarea
+              className="pinput pinput--area detail__notes"
+              defaultValue={detail.descriptionMd}
+              placeholder={t('detail.notesPlaceholder')}
+              onChange={() => setNotesSaved(false)}
+              onBlur={(e) => void saveNotes(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                  e.preventDefault()
+                  void saveNotes(e.currentTarget.value)
+                }
+              }}
+            />
+            <div className={`detail__savehint${notesSaved ? ' detail__savehint--saved' : ''}`}>
+              {notesSaved ? (
+                <>
+                  <Icon name="check" size={12} />
+                  {t('detail.saved')}
+                </>
+              ) : (
+                t('detail.autosaveHint')
+              )}
+            </div>
+          </div>
         )}
 
         {tab === 'links' && (
@@ -179,13 +274,20 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
                 className="pinput pinput--sm"
                 placeholder={t('detail.linkLabel')}
                 value={newLink.label}
-                onChange={(e) => setNewLink((s) => ({ ...s, label: e.currentTarget.value }))}
+                onChange={(e) => {
+                  // Wartość czytamy synchronicznie: currentTarget jest null, gdy React odpali updater w renderze.
+                  const value = e.currentTarget.value
+                  setNewLink((s) => ({ ...s, label: value }))
+                }}
               />
               <input
                 className="pinput pinput--sm"
                 placeholder={t('detail.linkTarget')}
                 value={newLink.target}
-                onChange={(e) => setNewLink((s) => ({ ...s, target: e.currentTarget.value }))}
+                onChange={(e) => {
+                  const value = e.currentTarget.value
+                  setNewLink((s) => ({ ...s, target: value }))
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') void addLink()
                 }}

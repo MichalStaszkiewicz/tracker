@@ -1,9 +1,13 @@
+import { useState } from 'react'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import type { Area } from '@shared/types'
 import { Icon } from './Icon'
 
 export type NavKey = 'tasks' | 'inbox' | 'board' | 'offers' | 'stats' | 'profile' | 'settings'
+
+/** Typ MIME ustawiany przez TaskCard — pozwala odrzucić przeciąganie zwykłego tekstu. */
+const TASK_DND_TYPE = 'application/x-task-id'
 
 interface NavDef {
   key: NavKey
@@ -33,10 +37,12 @@ interface Props {
   activeAreaId?: number | null
   onAreaSelect: (area: Area) => void
   onAddArea: () => void
+  onAreaDrop?: (area: Area, taskId: number) => void
 }
 
-export function Sidebar({ current, onNavigate, areas, activeAreaId, onAreaSelect, onAddArea }: Props) {
+export function Sidebar({ current, onNavigate, areas, activeAreaId, onAreaSelect, onAddArea, onAreaDrop }: Props) {
   const { t } = useT()
+  const [overAreaId, setOverAreaId] = useState<number | null>(null)
 
   const item = (def: NavDef) => (
     <button
@@ -62,17 +68,45 @@ export function Sidebar({ current, onNavigate, areas, activeAreaId, onAreaSelect
           <Icon name="plus" size={12} />
         </button>
       </div>
-      {areas.map((a) => (
-        <button
-          type="button"
-          className={`areaitem${a.id === activeAreaId ? ' areaitem--active' : ''}`}
-          key={a.id}
-          onClick={() => onAreaSelect(a)}
-        >
-          <span className="areadot" style={{ background: a.color }} />
-          {a.name}
-        </button>
-      ))}
+      {areas.map((a) => {
+        const cls = ['areaitem']
+        if (a.id === activeAreaId) cls.push('areaitem--active')
+        if (a.id === overAreaId) cls.push('areaitem--over')
+        return (
+          <button
+            type="button"
+            className={cls.join(' ')}
+            key={a.id}
+            onClick={() => onAreaSelect(a)}
+            onDragOver={
+              onAreaDrop
+                ? (e) => {
+                    // Tylko przeciąganie karty zadania; reasercja na każdy tick leczy migotanie od dzieci.
+                    if (!e.dataTransfer.types.includes(TASK_DND_TYPE)) return
+                    e.preventDefault()
+                    setOverAreaId(a.id)
+                  }
+                : undefined
+            }
+            onDragLeave={onAreaDrop ? () => setOverAreaId((id) => (id === a.id ? null : id)) : undefined}
+            onDrop={
+              onAreaDrop
+                ? (e) => {
+                    e.preventDefault()
+                    setOverAreaId(null)
+                    const raw = e.dataTransfer.getData(TASK_DND_TYPE)
+                    if (!raw) return
+                    const taskId = Number(raw)
+                    if (taskId) onAreaDrop(a, taskId)
+                  }
+                : undefined
+            }
+          >
+            <span className="areadot" style={{ background: a.color }} />
+            {a.name}
+          </button>
+        )
+      })}
       <div className="sidebar__foot">{FOOT_NAV.map(item)}</div>
     </nav>
   )

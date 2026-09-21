@@ -10,6 +10,7 @@ interface Props {
   activeAreaId?: number | null
   onAreaSelect: (area: Area) => void
   onAddArea: () => void
+  onAreaDrop?: (area: Area, taskId: number) => void
   onOpenPalette: () => void
   children: ReactNode
 }
@@ -21,6 +22,7 @@ export function AppShell({
   activeAreaId,
   onAreaSelect,
   onAddArea,
+  onAreaDrop,
   onOpenPalette,
   children
 }: Props) {
@@ -35,6 +37,7 @@ export function AppShell({
           activeAreaId={activeAreaId}
           onAreaSelect={onAreaSelect}
           onAddArea={onAddArea}
+          onAreaDrop={onAreaDrop}
         />
         <main style={{ position: 'relative', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {children}

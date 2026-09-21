@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Connection } from '../db/connection'
 import { makeTestDb } from '../db/test-utils'
-import { seed } from '../db/seed'
+import { seedDemo } from '../db/seed'
 import { commitImport, listOffers, previewImport } from './offers'
 
 const NOW = new Date(2026, 8, 18, 14, 0, 0)
 let conn: Connection
 beforeEach(() => {
   conn = makeTestDb()
-  seed(conn.db, NOW)
+  seedDemo(conn.db, NOW)
 })
 
 describe('listOffers', () => {

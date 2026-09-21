@@ -14,9 +14,10 @@ interface Props {
   activeKey?: string | null
   onSelect: (key: string) => void
   align?: 'left' | 'right'
+  ariaLabel?: string
 }
 
-export function Menu({ trigger, items, activeKey, onSelect, align = 'left' }: Props) {
+export function Menu({ trigger, items, activeKey, onSelect, align = 'left', ariaLabel }: Props) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -38,7 +39,11 @@ export function Menu({ trigger, items, activeKey, onSelect, align = 'left' }: Pr
 
   return (
     <div className="menu" ref={ref}>
-      <button className={`chip${open ? ' chip--active' : ''}`} onClick={() => setOpen((o) => !o)}>
+      <button
+        className={`chip${open ? ' chip--active' : ''}`}
+        aria-label={ariaLabel}
+        onClick={() => setOpen((o) => !o)}
+      >
         {trigger}
         <Icon name="caret-down" size={9} />
       </button>

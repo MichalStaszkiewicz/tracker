@@ -324,6 +324,25 @@ export function listBoard(db: DB, typeId: number): BoardView {
   return { stages: stageRows, cards }
 }
 
+/** Zmiana typu wpisu (np. awans zadania na projekt) — resetuje etap na pierwszy nowego typu. */
+export function setType(db: DB, entryId: number, typeId: number, now: Date = new Date()): EntryDetail {
+  const type = db.select().from(entryTypes).where(eq(entryTypes.id, typeId)).get()
+  if (!type) throw new Error(`Typ ${typeId} nie istnieje`)
+  const firstStage = db
+    .select()
+    .from(stages)
+    .where(eq(stages.typeId, typeId))
+    .all()
+    .sort((a, b) => a.position - b.position)[0]
+  db.update(entries)
+    .set({ typeId, stageId: firstStage?.id ?? null, completedAt: null, updatedAt: nowIso(now) })
+    .where(eq(entries.id, entryId))
+    .run()
+  const detail = getEntryDetail(db, entryId)
+  if (!detail) throw new Error(`Wpis ${entryId} zniknął po zmianie typu`)
+  return detail
+}
+
 /** Ustawia etap wpisu; etap końcowy ustawia completedAt, inny go czyści. */
 export function setStage(db: DB, entryId: number, stageId: number, now: Date = new Date()): TaskListItem {
   const stage = db.select().from(stages).where(eq(stages.id, stageId)).get()

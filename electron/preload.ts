@@ -30,6 +30,7 @@ const api: TrackerApi = {
     parents: () => ipcRenderer.invoke(IPC.entryParents),
     search: (q) => ipcRenderer.invoke(IPC.entrySearch, q),
     setStage: (id, stageId) => ipcRenderer.invoke(IPC.entrySetStage, id, stageId),
+    setType: (id, typeId) => ipcRenderer.invoke(IPC.entrySetType, id, typeId),
     detail: (id) => ipcRenderer.invoke(IPC.entryDetail, id),
     update: (id, patch) => ipcRenderer.invoke(IPC.entryUpdate, id, patch),
     addTag: (id, group, name) => ipcRenderer.invoke(IPC.entryAddTag, id, group, name),
@@ -49,7 +50,8 @@ const api: TrackerApi = {
   offers: {
     list: () => ipcRenderer.invoke(IPC.offersList),
     preview: (offers) => ipcRenderer.invoke(IPC.offersPreview, offers),
-    commit: (offers) => ipcRenderer.invoke(IPC.offersCommit, offers)
+    commit: (offers) => ipcRenderer.invoke(IPC.offersCommit, offers),
+    scrape: (source, criteria) => ipcRenderer.invoke(IPC.offersScrape, source, criteria)
   },
   settings: {
     getAll: () => ipcRenderer.invoke(IPC.settingsGetAll),
