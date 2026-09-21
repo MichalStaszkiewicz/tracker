@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc'
-import type { EntryPatch, ImportOffer, StatsPeriod, TaskFilter } from '@shared/types'
+import type { EntryPatch, ImportOffer, ScrapeCriteria, ScrapeSource, StatsPeriod, TaskFilter } from '@shared/types'
 import { createArea, listAreas } from '@core/repositories/areas'
 import { listBoardTypes, listTypes } from '@core/repositories/types'
 import { addTagToEntry, listTags, removeTagFromEntry } from '@core/repositories/tags'
@@ -20,6 +20,8 @@ import {
 import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
 import { getStats } from '@core/repositories/stats'
 import { commitImport, listOffers, previewImport } from '@core/repositories/offers'
+import { fetchJustJoinOffers } from '@core/scraper/justjoin'
+import { DEFAULT_JUSTJOIN_CRITERIA } from '@shared/scrapers/justjoin'
 import { getAllSettings, setSetting } from '@core/repositories/settings'
 import { getDb, getDbPaths } from '../db'
 
@@ -64,6 +66,11 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.offersList, () => listOffers(getDb()))
   ipcMain.handle(IPC.offersPreview, (_e, offers: ImportOffer[]) => previewImport(getDb(), offers))
   ipcMain.handle(IPC.offersCommit, (_e, offers: ImportOffer[]) => commitImport(getDb(), offers))
+  ipcMain.handle(IPC.offersScrape, async (_e, source: ScrapeSource, criteria?: ScrapeCriteria) => {
+    if (source !== 'justjoin') throw new Error(`Nieznane źródło ofert: ${source}`)
+    const offers = await fetchJustJoinOffers(criteria ?? DEFAULT_JUSTJOIN_CRITERIA)
+    return previewImport(getDb(), offers)
+  })
 
   ipcMain.handle(IPC.settingsGetAll, () => getAllSettings(getDb()))
   ipcMain.handle(IPC.settingsSet, (_e, key: string, value: unknown) => setSetting(getDb(), key, value))

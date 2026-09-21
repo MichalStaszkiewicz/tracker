@@ -50,7 +50,8 @@ const api: TrackerApi = {
   offers: {
     list: () => ipcRenderer.invoke(IPC.offersList),
     preview: (offers) => ipcRenderer.invoke(IPC.offersPreview, offers),
-    commit: (offers) => ipcRenderer.invoke(IPC.offersCommit, offers)
+    commit: (offers) => ipcRenderer.invoke(IPC.offersCommit, offers),
+    scrape: (source, criteria) => ipcRenderer.invoke(IPC.offersScrape, source, criteria)
   },
   settings: {
     getAll: () => ipcRenderer.invoke(IPC.settingsGetAll),

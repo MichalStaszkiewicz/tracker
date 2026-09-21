@@ -13,6 +13,8 @@ import type {
   Link,
   OfferRow,
   ParentCandidate,
+  ScrapeCriteria,
+  ScrapeSource,
   SessionActive,
   StatsPeriod,
   StatsView,
@@ -57,6 +59,7 @@ export const IPC = {
   offersList: 'offers:list',
   offersPreview: 'offers:preview',
   offersCommit: 'offers:commit',
+  offersScrape: 'offers:scrape',
 
   settingsGetAll: 'settings:getAll',
   settingsSet: 'settings:set',
@@ -118,6 +121,8 @@ export interface TrackerApi {
     list(): Promise<OfferRow[]>
     preview(offers: ImportOffer[]): Promise<ImportPreview>
     commit(offers: ImportOffer[]): Promise<{ imported: number }>
+    /** Pobiera oferty ze źródła (fetch + parse) i zwraca podgląd importu (dedup po URL). */
+    scrape(source: ScrapeSource, criteria?: ScrapeCriteria): Promise<ImportPreview>
   }
   settings: {
     getAll(): Promise<Record<string, unknown>>
