@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '@/api'
+import { DatePicker } from '@/components/DatePicker'
 import { Icon } from '@/components/Icon'
 import { Menu } from '@/components/Menu'
 import { TypeForm } from '@/components/TypeForm'
@@ -141,6 +142,12 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
           ]}
           activeKey={detail.area ? String(detail.area.id) : 'none'}
           onSelect={(k) => void changeArea(k === 'none' ? null : Number(k))}
+        />
+        <DatePicker
+          align="right"
+          ariaLabel={t('date.pick')}
+          value={detail.plannedDate}
+          onChange={(v) => void commit({ plannedDate: v })}
         />
         <button className="btn btn--outline" onClick={() => void api.sessions.start(id)}>
           <Icon name="timer" size={14} />
