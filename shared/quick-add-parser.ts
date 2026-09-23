@@ -1,8 +1,8 @@
 // Czysta funkcja parsera składni szybkiego dodawania.
-// Model marker-delimitowany: tytuł to tekst przed pierwszym znacznikiem,
-// potem każdy znacznik zaczyna dyrektywę, której wartość ciągnie się do
-// następnego znacznika (na granicy słowa). Dzięki temu rodzic i tag mogą
-// mieć wiele słów: ">Parser PE w C++", "#heap exploitation".
+// Model marker-delimitowany: słowa poza dyrektywami tworzą tytuł. Wartość
+// #tagu i >rodzica ciągnie się do następnego znacznika (mogą mieć wiele słów:
+// ">Parser PE w C++", "#heap exploitation"); /typ, !priorytet i @data biorą
+// jedno słowo, a dalszy tekst wraca do tytułu ("@pon asd" → tytuł "asd").
 //
 //   /typ        typ wpisu (pierwsze słowo)
 //   #tag        tag, opcjonalnie z grupą: #grupa:nazwa
@@ -28,6 +28,8 @@ export interface ParsedQuickAdd {
 
 export type Marker = '/' | '#' | '>' | '!' | '@'
 const MARKERS = new Set<string>(['/', '#', '>', '!', '@'])
+/** Znaczniki z jednowyrazową wartością; #tag i >rodzic mogą mieć wiele słów. */
+const SINGLE_WORD = new Set<string>(['/', '!', '@'])
 
 export interface ActiveToken {
   marker: '/' | '#' | '>' | '@' // '!' nie ma podpowiedzi
@@ -50,8 +52,11 @@ export function parseQuickAdd(input: string, now: Date = new Date()): ParsedQuic
     if (MARKERS.has(token[0])) {
       current = { marker: token[0], value: token.slice(1) }
       directives.push(current)
+      // /typ, !prio, @data mają jedno słowo — dalszy tekst wraca do tytułu („@pon asd" → „asd").
+      if (SINGLE_WORD.has(current.marker) && current.value) current = null
     } else if (current) {
       current.value = current.value ? `${current.value} ${token}` : token
+      if (SINGLE_WORD.has(current.marker)) current = null // „@ jutro" — wartość po spacji
     } else {
       titleWords.push(token)
     }

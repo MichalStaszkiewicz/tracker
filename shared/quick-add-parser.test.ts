@@ -47,6 +47,25 @@ describe('parseQuickAdd', () => {
     expect(parseQuickAdd(`x ${token}`, NOW).plannedDate).toBeUndefined()
   })
 
+  // Regresja: „@pon asd" dawało pusty tytuł (asd wpadało do wartości daty) → tytuł = surowa linia.
+  it.each([
+    ['@pon asd', 'asd', { plannedDate: '2026-09-21' }],
+    ['Kupić mleko @jutro rano', 'Kupić mleko rano', { plannedDate: '2026-09-15' }],
+    ['@ jutro coś', 'coś', { plannedDate: '2026-09-15' }],
+    ['!2 pilne zadanie', 'pilne zadanie', { priority: 2 }],
+    ['/note Pomysł na apkę', 'Pomysł na apkę', { typeKey: 'note' }]
+  ])('znaczniki jednowyrazowe (@ / !) nie połykają tytułu: %s', (line, title, extra) => {
+    const r = parseQuickAdd(line, NOW)
+    expect(r.title).toBe(title)
+    expect(r).toMatchObject(extra)
+  })
+
+  it('#tag i >rodzic nadal mogą mieć wiele słów', () => {
+    const r = parseQuickAdd('x #heap exploitation >Parser PE w C++', NOW)
+    expect(r.tags).toEqual([{ name: 'heap exploitation' }])
+    expect(r.parent).toBe('Parser PE w C++')
+  })
+
   it.each([
     ['!1', 1],
     ['!3', 3]

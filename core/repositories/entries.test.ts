@@ -265,3 +265,12 @@ describe('quickAdd — data z kontekstu widoku', () => {
     expect(() => quickAdd(conn.db, 'Zła data', NOW, { plannedDate: '2026-02-31' })).toThrow(/data/i)
   })
 })
+
+describe('quickAdd — regresja: data na początku linii', () => {
+  it('„@pon asd" tworzy zadanie „asd" na najbliższy poniedziałek (nie tytuł „@pon asd")', () => {
+    const id = quickAdd(conn.db, '@pon asd', NOW) // NOW = pt 2026-09-18
+    const item = getTask(conn.db, id)
+    expect(item?.title).toBe('asd')
+    expect(item?.plannedDate).toBe('2026-09-21')
+  })
+})
