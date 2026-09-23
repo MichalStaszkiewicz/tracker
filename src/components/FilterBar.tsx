@@ -1,12 +1,12 @@
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
 import type { GroupBy } from '@/lib/task-view'
-import type { EntryType, Tag, TaskFilter } from '@shared/types'
+import { TASK_GROUP_BYS, type EntryType, type Tag, type TaskFilter } from '@shared/types'
 import { Icon } from './Icon'
 import { Menu, type MenuItem } from './Menu'
 
 const FILTERS: TaskFilter[] = ['active', 'today', 'blocked', 'done']
-const GROUPS: GroupBy[] = ['status', 'date', 'area', 'type']
+const GROUPS: readonly GroupBy[] = TASK_GROUP_BYS
 
 interface Props {
   filter: TaskFilter

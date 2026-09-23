@@ -35,13 +35,15 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
   const [typeKey, setTypeKey] = useState<string | undefined>()
   const [tagId, setTagId] = useState<number | undefined>()
   const [query, setQuery] = useState('')
-  const [groupBy, setGroupBy] = useState<GroupBy>('status')
 
   const { tasks, refetch } = useTasks(filter, refreshToken)
   const types = useTypes()
   const { tags, reload: reloadTags } = useTags()
   const session = useActiveSession()
-  const { shortcuts } = useSettingsCtx()
+  const { shortcuts, settings, set } = useSettingsCtx()
+  // Grupowanie zapamiętane w ustawieniach (domyślnie po dacie).
+  const groupBy: GroupBy = settings.tasksGroupBy
+  const setGroupBy = (g: GroupBy) => set('tasksGroupBy', g)
 
   useHotkeys({ [shortcuts.session]: () => void session.toggle() })
 
@@ -71,7 +73,7 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
       case 'none':
         return t('date.none')
       case 'done':
-        return undefined // nagłówek bierze etykietę statusu „zrobione"
+        return t('date.done') // wszystkie zrobione, nie tylko dzisiejsze
     }
     return g.label === '—' ? t('area.none') : g.label ?? undefined
   }

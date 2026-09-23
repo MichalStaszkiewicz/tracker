@@ -1,5 +1,5 @@
 import { DEFAULT_PROFILE, type ProfileData } from './profile'
-import type { Lang } from './types'
+import { TASK_GROUP_BYS, type Lang, type TaskGroupBy } from './types'
 
 export interface AppSettings {
   language: Lang
@@ -16,6 +16,8 @@ export interface AppSettings {
   countActiveWindowOnly: boolean
   backup: boolean
   profile: ProfileData
+  /** Zapamiętane grupowanie listy zadań. */
+  tasksGroupBy: TaskGroupBy
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -32,16 +34,25 @@ export const DEFAULT_SETTINGS: AppSettings = {
   askUnclosedSession: true,
   countActiveWindowOnly: false,
   backup: true,
-  profile: DEFAULT_PROFILE
+  profile: DEFAULT_PROFILE,
+  tasksGroupBy: 'date'
 }
 
-/** Nakłada zapisane wartości na domyślne (nieznane klucze ignoruje). Czysta. */
+/** Walidatory kluczy o zamkniętym zbiorze wartości — śmieć z bazy nie psuje widoku. */
+const VALID: Partial<Record<string, (v: unknown) => boolean>> = {
+  tasksGroupBy: (v) => typeof v === 'string' && (TASK_GROUP_BYS as readonly string[]).includes(v)
+}
+
+/** Nakłada zapisane wartości na domyślne (nieznane klucze i niepoprawne wartości ignoruje). Czysta. */
 export function mergeSettings(raw: Record<string, unknown>): AppSettings {
   const out: AppSettings = { ...DEFAULT_SETTINGS }
   const writable = out as unknown as Record<string, unknown>
   for (const key of Object.keys(DEFAULT_SETTINGS)) {
     const value = raw[key]
-    if (value !== undefined && value !== null) writable[key] = value
+    if (value === undefined || value === null) continue
+    const isValid = VALID[key]
+    if (isValid && !isValid(value)) continue
+    writable[key] = value
   }
   return out
 }

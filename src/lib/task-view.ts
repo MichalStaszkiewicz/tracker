@@ -1,8 +1,8 @@
 import { addDaysKey, toDateKey } from '@shared/dates'
 import { taskStatus } from '@shared/task-status'
-import type { MovePatch, TaskListItem, TaskStatus } from '@shared/types'
+import type { MovePatch, TaskGroupBy, TaskListItem, TaskStatus } from '@shared/types'
 
-export type GroupBy = 'status' | 'area' | 'type' | 'date'
+export type GroupBy = TaskGroupBy
 
 export interface TaskFilters {
   typeKey?: string

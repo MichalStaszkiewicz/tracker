@@ -104,6 +104,10 @@ export interface EntryDetail {
   children: TaskListItem[]
 }
 
+/** Grupowanie listy zadań. */
+export type TaskGroupBy = 'status' | 'area' | 'type' | 'date'
+export const TASK_GROUP_BYS: readonly TaskGroupBy[] = ['date', 'status', 'area', 'type']
+
 /** Kontekst widoku przy szybkim dodawaniu: otwarty obszar, data filtru „Dziś". Jawne `@` wygrywa. */
 export interface QuickAddContext {
   areaId?: number | null
