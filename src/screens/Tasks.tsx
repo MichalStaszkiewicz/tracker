@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '@/api'
 import { FilterBar } from '@/components/FilterBar'
 import { Icon } from '@/components/Icon'
@@ -12,12 +12,13 @@ import { useHotkeys } from '@/hooks/useHotkeys'
 import { useTags, useTypes } from '@/hooks/useLookups'
 import { useTaskReorder } from '@/hooks/useTaskReorder'
 import { useTasks } from '@/hooks/useTasks'
+import { useToday } from '@/hooks/useToday'
 import { useT } from '@/i18n'
 import { weekdayDate } from '@/lib/dates'
 import { filterTasks, groupTasks, type GroupBy, type TaskGroup } from '@/lib/task-view'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useSettingsCtx } from '@/settings-context'
-import { toDateKey } from '@shared/dates'
+import { fromDateKey, toDateKey } from '@shared/dates'
 import { taskStatus } from '@shared/task-status'
 import type { TaskFilter } from '@shared/types'
 
@@ -53,10 +54,19 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
   )
   // Przy grupowaniu po dacie Dziś/Jutro/Bez daty są zawsze widoczne — można na nie przeciągnąć.
   const ensureDateBuckets = groupBy === 'date' && (filter === 'active' || filter === 'today')
+  // „Dziś" odświeżane o północy — sekcje i ich patche (upuść na Dziś) nie mogą zostać wczorajsze.
+  const today = useToday()
   const groups = useMemo(
-    () => groupTasks(filtered, groupBy, { ensureDateBuckets }),
-    [filtered, groupBy, ensureDateBuckets]
+    () => groupTasks(filtered, groupBy, { ensureDateBuckets, now: fromDateKey(today) }),
+    [filtered, groupBy, ensureDateBuckets, today]
   )
+  // Filtry dat liczone w core (Dziś, zaległe) też trzeba przeliczyć po zmianie dnia.
+  const dayOfFetch = useRef(today)
+  useEffect(() => {
+    if (dayOfFetch.current === today) return
+    dayOfFetch.current = today
+    void refetch()
+  }, [today, refetch])
   const reorder = useTaskReorder({ groups, onMoved: refetch })
   const activeCount = filtered.filter((it) => taskStatus(it) !== 'done').length
 
@@ -75,7 +85,7 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
       case 'done':
         return t('date.done') // wszystkie zrobione, nie tylko dzisiejsze
     }
-    return g.label === '—' ? t('area.none') : g.label ?? undefined
+    return g.key === 'area:none' ? t('area.none') : g.label ?? undefined
   }
 
   const dateLabel = new Intl.DateTimeFormat(lang === 'pl' ? 'pl-PL' : 'en-US', {
