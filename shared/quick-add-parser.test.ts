@@ -33,9 +33,18 @@ describe('parseQuickAdd', () => {
     ['@jutro', '2026-09-15'],
     ['@pt', '2026-09-18'],
     ['@pon', '2026-09-21'], // najbliższy PRZYSZŁY poniedziałek, nie dzisiejszy
-    ['@2026-12-01', '2026-12-01']
+    ['@2026-12-01', '2026-12-01'],
+    ['@25.09', '2026-09-25'], // polski DD.MM — bieżący rok
+    ['@5.10', '2026-10-05'],
+    ['@14.09', '2026-09-14'], // dziś się liczy
+    ['@03.01', '2027-01-03'], // bez roku i już minęło → przyszły rok
+    ['@01.02.2027', '2027-02-01'] // DD.MM.RRRR — dokładnie
   ])('parsuje datę %s → %s', (token, expected) => {
     expect(parseQuickAdd(`x ${token}`, NOW).plannedDate).toBe(expected)
+  })
+
+  it.each(['@31.02', '@13.13', '@0.05', '@32.01.2027'])('odrzuca nieistniejącą datę %s', (token) => {
+    expect(parseQuickAdd(`x ${token}`, NOW).plannedDate).toBeUndefined()
   })
 
   it.each([
