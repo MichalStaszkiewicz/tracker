@@ -51,4 +51,18 @@ describe('parseDateWord', () => {
   it.each(['31.02', '2026-02-31', '13.13', 'coś', ''])('odrzuca %s', (word) => {
     expect(parseDateWord(word, NOW)).toBeUndefined()
   })
+
+  it('29.02 bez roku → najbliższy istniejący 29 lutego (regresja: rok przed przestępnym)', () => {
+    expect(parseDateWord('29.02', new Date(2027, 4, 10))).toBe('2028-02-29')
+    expect(parseDateWord('29.02', new Date(2028, 0, 10))).toBe('2028-02-29')
+  })
+
+  it.each([
+    ['fri', '2026-09-25'],
+    ['monday', '2026-09-28'],
+    ['Tue', '2026-09-29'],
+    ['sun', '2026-09-27']
+  ])('angielski dzień tygodnia %s → %s', (word, expected) => {
+    expect(parseDateWord(word, NOW)).toBe(expected)
+  })
 })

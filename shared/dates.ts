@@ -33,13 +33,13 @@ export function nextWeekdayKey(now: Date, weekday: number): string {
 }
 
 const WEEKDAYS: Record<string, number> = {
-  nd: 0, niedziela: 0,
-  pon: 1, pn: 1, poniedzialek: 1, poniedziałek: 1,
-  wt: 2, wtorek: 2,
-  sr: 3, śr: 3, sroda: 3, środa: 3,
-  czw: 4, czwartek: 4,
-  pt: 5, piatek: 5, piątek: 5,
-  sob: 6, sobota: 6
+  nd: 0, niedziela: 0, sun: 0, sunday: 0,
+  pon: 1, pn: 1, poniedzialek: 1, poniedziałek: 1, mon: 1, monday: 1,
+  wt: 2, wtorek: 2, tue: 2, tues: 2, tuesday: 2,
+  sr: 3, śr: 3, sroda: 3, środa: 3, wed: 3, wednesday: 3,
+  czw: 4, czwartek: 4, thu: 4, thur: 4, thurs: 4, thursday: 4,
+  pt: 5, piatek: 5, piątek: 5, fri: 5, friday: 5,
+  sob: 6, sobota: 6, sat: 6, saturday: 6
 }
 
 /** Klucz tylko dla istniejącej daty (odrzuca 31.02, 2026-02-31, miesiąc 13…). */
@@ -72,9 +72,12 @@ export function parseDateWord(raw: string, now: Date = new Date()): string | und
     const day = Number(dm[1])
     const month = Number(dm[2])
     if (dm[3]) return validKey(Number(dm[3]), month, day)
-    const thisYear = validKey(now.getFullYear(), month, day)
-    if (!thisYear) return undefined
-    return thisYear >= today ? thisYear : validKey(now.getFullYear() + 1, month, day)
+    // Najbliższe wystąpienie od dziś (29.02 może być dopiero za kilka lat).
+    for (let y = now.getFullYear(); y <= now.getFullYear() + 4; y++) {
+      const key = validKey(y, month, day)
+      if (key && key >= today) return key
+    }
+    return undefined
   }
 
   const wd = WEEKDAYS[key]
