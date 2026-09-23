@@ -7,6 +7,7 @@ import {
   listBoard,
   listParentCandidates,
   listTasks,
+  moveEntry,
   quickAdd,
   searchEntries,
   setStage,
@@ -151,5 +152,125 @@ describe('quickAdd', () => {
     const sieci = listAreas(conn.db).find((a) => a.name === 'Sieci')!.id
     const id = quickAdd(conn.db, 'Nowe zadanie sieciowe', NOW, { areaId: sieci })
     expect(getTask(conn.db, id)?.area?.name).toBe('Sieci')
+  })
+})
+
+describe('kolejność zadań (moveEntry)', () => {
+  const ids = (): number[] => listTasks(conn.db, 'active', NOW).map((i) => i.id)
+
+  it('przenosi zadanie PRZED cel', () => {
+    const before = ids()
+    const last = before[before.length - 1]
+    moveEntry(conn.db, last, before[0], 'before')
+    expect(ids()).toEqual([last, ...before.slice(0, -1)])
+  })
+
+  it('przenosi zadanie ZA cel', () => {
+    const before = ids()
+    const first = before[0]
+    moveEntry(conn.db, first, before[2], 'after')
+    expect(ids()).toEqual([before[1], before[2], first, ...before.slice(3)])
+  })
+
+  it('pozostałe zadania (także ukryte filtrem) zachowują względną kolejność', () => {
+    const done = listTasks(conn.db, 'done', NOW).map((i) => i.id)
+    const before = ids()
+    moveEntry(conn.db, before[before.length - 1], before[0], 'before')
+    expect(listTasks(conn.db, 'done', NOW).map((i) => i.id)).toEqual(done)
+  })
+
+  it('nowe zadanie z szybkiego dodawania ląduje na końcu — także po przestawieniu', () => {
+    const before = ids()
+    moveEntry(conn.db, before[before.length - 1], before[0], 'before')
+    const id = quickAdd(conn.db, 'Świeże zadanie', NOW)
+    const after = ids()
+    expect(after[after.length - 1]).toBe(id)
+  })
+
+  it('przeniesienie na samego siebie nic nie zmienia', () => {
+    const before = ids()
+    moveEntry(conn.db, before[1], before[1], 'before')
+    expect(ids()).toEqual(before)
+  })
+
+  it('rzuca dla nieistniejącego celu', () => {
+    expect(() => moveEntry(conn.db, ids()[0], 999999, 'before')).toThrow()
+  })
+
+  it('przenosi i ustawia datę sekcji w jednej operacji (patch)', () => {
+    const before = ids()
+    const last = before[before.length - 1]
+    moveEntry(conn.db, last, before[0], 'before', { plannedDate: '2026-09-25' }, NOW)
+    expect(ids()[0]).toBe(last)
+    expect(getTask(conn.db, last)?.plannedDate).toBe('2026-09-25')
+  })
+
+  it('patch obszaru razem z pozycją', () => {
+    const before = ids()
+    const praca = listAreas(conn.db).find((a) => a.name === 'Praca')!
+    moveEntry(conn.db, before[0], before[1], 'after', { areaId: praca.id }, NOW)
+    expect(ids().slice(0, 2)).toEqual([before[1], before[0]])
+    expect(getTask(conn.db, before[0])?.area?.name).toBe('Praca')
+  })
+
+  it('nieistniejąca data w patchu → błąd i brak jakiejkolwiek zmiany (także kolejności)', () => {
+    const before = ids()
+    const last = before[before.length - 1]
+    expect(() => moveEntry(conn.db, last, before[0], 'before', { plannedDate: '2026-02-31' }, NOW)).toThrow(/data/i)
+    expect(ids()).toEqual(before)
+  })
+
+  it('patch na samego siebie zmienia tylko pole, nie kolejność', () => {
+    const before = ids()
+    moveEntry(conn.db, before[1], before[1], 'before', { plannedDate: null }, NOW)
+    expect(ids()).toEqual(before)
+    expect(getTask(conn.db, before[1])?.plannedDate).toBeNull()
+  })
+})
+
+describe('filtr Dziś — zaległe', () => {
+  // NOW = pt 2026-09-18
+  const todayIds = () => listTasks(conn.db, 'today', NOW).map((i) => i.id)
+
+  it('pokazuje niezrobione zadanie zaplanowane na wcześniej', () => {
+    const id = quickAdd(conn.db, 'Zaległe zadanie @2026-09-16', NOW)
+    expect(todayIds()).toContain(id)
+  })
+
+  it('nie pokazuje zrobionego zadania z przeszłości', () => {
+    const id = quickAdd(conn.db, 'Zrobione dawno @2026-09-10', NOW)
+    toggleDone(conn.db, id, new Date(2026, 8, 10, 12, 0, 0))
+    expect(todayIds()).not.toContain(id)
+  })
+
+  it('nie pokazuje zadania na jutro', () => {
+    const id = quickAdd(conn.db, 'Jutrzejsze @jutro', NOW)
+    expect(todayIds()).not.toContain(id)
+  })
+})
+
+describe('quickAdd — data z kontekstu widoku', () => {
+  it('bez @ bierze datę z kontekstu (np. filtr Dziś), żeby zadanie nie znikło z widoku', () => {
+    const id = quickAdd(conn.db, 'Dodane w widoku Dziś', NOW, { plannedDate: '2026-09-18' })
+    expect(getTask(conn.db, id)?.plannedDate).toBe('2026-09-18')
+    expect(listTasks(conn.db, 'today', NOW).map((i) => i.id)).toContain(id)
+  })
+
+  it('jawne @ ma pierwszeństwo przed kontekstem', () => {
+    const id = quickAdd(conn.db, 'Jawne @jutro', NOW, { plannedDate: '2026-09-18' })
+    expect(getTask(conn.db, id)?.plannedDate).toBe('2026-09-19')
+  })
+
+  it('odrzuca nieistniejącą datę z kontekstu', () => {
+    expect(() => quickAdd(conn.db, 'Zła data', NOW, { plannedDate: '2026-02-31' })).toThrow(/data/i)
+  })
+})
+
+describe('quickAdd — regresja: data na początku linii', () => {
+  it('„@pon asd" tworzy zadanie „asd" na najbliższy poniedziałek (nie tytuł „@pon asd")', () => {
+    const id = quickAdd(conn.db, '@pon asd', NOW) // NOW = pt 2026-09-18
+    const item = getTask(conn.db, id)
+    expect(item?.title).toBe('asd')
+    expect(item?.plannedDate).toBe('2026-09-21')
   })
 })

@@ -1,14 +1,16 @@
 // Czysta funkcja parsera składni szybkiego dodawania.
-// Model marker-delimitowany: tytuł to tekst przed pierwszym znacznikiem,
-// potem każdy znacznik zaczyna dyrektywę, której wartość ciągnie się do
-// następnego znacznika (na granicy słowa). Dzięki temu rodzic i tag mogą
-// mieć wiele słów: ">Parser PE w C++", "#heap exploitation".
+// Model marker-delimitowany: słowa poza dyrektywami tworzą tytuł. Wartość
+// #tagu i >rodzica ciągnie się do następnego znacznika (mogą mieć wiele słów:
+// ">Parser PE w C++", "#heap exploitation"); /typ, !priorytet i @data biorą
+// jedno słowo, a dalszy tekst wraca do tytułu ("@pon asd" → tytuł "asd").
 //
 //   /typ        typ wpisu (pierwsze słowo)
 //   #tag        tag, opcjonalnie z grupą: #grupa:nazwa
 //   >rodzic     rodzic (może mieć spacje)
 //   !priorytet  1..3
-//   @data       dziś | jutro | pon..nd | YYYY-MM-DD
+//   @data       dziś | jutro | pojutrze | pon..nd | DD.MM[.RRRR] | RRRR-MM-DD  (gramatyka: ./dates)
+
+import { parseDateWord } from './dates'
 
 export interface ParsedTag {
   group?: string
@@ -26,21 +28,13 @@ export interface ParsedQuickAdd {
 
 export type Marker = '/' | '#' | '>' | '!' | '@'
 const MARKERS = new Set<string>(['/', '#', '>', '!', '@'])
+/** Znaczniki z jednowyrazową wartością; #tag i >rodzic mogą mieć wiele słów. */
+const SINGLE_WORD = new Set<string>(['/', '!', '@'])
 
 export interface ActiveToken {
   marker: '/' | '#' | '>' | '@' // '!' nie ma podpowiedzi
   query: string
   start: number // indeks znacznika w wejściu
-}
-
-const WEEKDAYS: Record<string, number> = {
-  nd: 0, niedziela: 0,
-  pon: 1, pn: 1, poniedzialek: 1, poniedziałek: 1,
-  wt: 2, wtorek: 2,
-  sr: 3, śr: 3, sroda: 3, środa: 3,
-  czw: 4, czwartek: 4,
-  pt: 5, piatek: 5, piątek: 5,
-  sob: 6, sobota: 6
 }
 
 interface Directive {
@@ -58,8 +52,11 @@ export function parseQuickAdd(input: string, now: Date = new Date()): ParsedQuic
     if (MARKERS.has(token[0])) {
       current = { marker: token[0], value: token.slice(1) }
       directives.push(current)
+      // /typ, !prio, @data mają jedno słowo — dalszy tekst wraca do tytułu („@pon asd" → „asd").
+      if (SINGLE_WORD.has(current.marker) && current.value) current = null
     } else if (current) {
       current.value = current.value ? `${current.value} ${token}` : token
+      if (SINGLE_WORD.has(current.marker)) current = null // „@ jutro" — wartość po spacji
     } else {
       titleWords.push(token)
     }
@@ -85,7 +82,7 @@ export function parseQuickAdd(input: string, now: Date = new Date()): ParsedQuic
         break
       }
       case '@': {
-        const date = parseDate(firstWord(value), now)
+        const date = parseDateWord(firstWord(value), now)
         if (date) result.plannedDate = date
         break
       }
@@ -135,32 +132,4 @@ function parseTag(raw: string): ParsedTag {
     return { group: raw.slice(0, idx).toLowerCase(), name: raw.slice(idx + 1).trim() }
   }
   return { name: raw }
-}
-
-function parseDate(raw: string, now: Date): string | undefined {
-  const key = raw.toLowerCase()
-  if (key === 'dzis' || key === 'dziś' || key === 'today') return fmt(now)
-  if (key === 'jutro' || key === 'tomorrow') return fmt(addDays(now, 1))
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
-  const wd = WEEKDAYS[key]
-  if (wd !== undefined) return fmt(nextWeekday(now, wd))
-  return undefined
-}
-
-function nextWeekday(from: Date, target: number): Date {
-  const diff = (target - from.getDay() + 7) % 7 || 7
-  return addDays(from, diff)
-}
-
-function addDays(d: Date, n: number): Date {
-  const r = new Date(d)
-  r.setDate(r.getDate() + n)
-  return r
-}
-
-function fmt(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import type { CardReorder } from '@/hooks/useTaskReorder'
 import { useT } from '@/i18n'
 import { daysUntil, formatDuration, formatStopwatch, secondsSince, shortDate } from '@/lib/format'
+import { TASK_DND_TYPE } from '@/lib/list-dnd'
 import type { Tag, TaskListItem } from '@shared/types'
 import { Icon } from './Icon'
 
@@ -8,9 +10,11 @@ interface Props {
   item: TaskListItem
   onToggle: (id: number) => void
   onOpen?: (id: number) => void
+  /** Zmiana kolejności na liście (przeciąganie + Alt+↑/↓). */
+  reorder?: CardReorder
 }
 
-export function TaskCard({ item, onToggle, onOpen }: Props) {
+export function TaskCard({ item, onToggle, onOpen, reorder }: Props) {
   const { t } = useT()
   const [completing, setCompleting] = useState(false)
   const [dragging, setDragging] = useState(false)
@@ -31,20 +35,41 @@ export function TaskCard({ item, onToggle, onOpen }: Props) {
   if (showDone) cls.push('card--done')
   if (completing) cls.push('card--completing')
   if (dragging) cls.push('card--dragging')
+  if (reorder?.indicator === 'before') cls.push('card--drop-before')
+  if (reorder?.indicator === 'after') cls.push('card--drop-after')
 
   return (
     <div
       className={cls.join(' ')}
       draggable
+      tabIndex={0}
+      data-task-id={item.id}
+      aria-keyshortcuts={reorder ? 'Alt+ArrowUp Alt+ArrowDown' : undefined}
       onDragStart={(e) => {
         // Dedykowany typ MIME — cele upuszczenia rozpoznają przeciąganie karty (nie dowolny tekst).
-        e.dataTransfer.setData('application/x-task-id', String(item.id))
+        e.dataTransfer.setData(TASK_DND_TYPE, String(item.id))
         e.dataTransfer.setData('text/plain', String(item.id))
         e.dataTransfer.effectAllowed = 'move'
         setDragging(true)
+        reorder?.onDragStart()
       }}
-      onDragEnd={() => setDragging(false)}
+      onDragEnd={() => {
+        setDragging(false)
+        reorder?.onDragEnd()
+      }}
+      onDragOver={reorder?.onDragOver}
+      onDrop={reorder?.onDrop}
       onClick={() => onOpen?.(item.id)}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return // klawisze z checkboxa nie dotyczą karty
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          onOpen?.(item.id)
+        } else if (reorder && e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+          e.preventDefault()
+          reorder.onMoveKey(e.key === 'ArrowUp' ? -1 : 1)
+        }
+      }}
     >
       <span className="card__bar" style={{ background: item.area?.color ?? 'var(--color-neutral-700)' }} />
       <button

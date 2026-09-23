@@ -1,6 +1,7 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull } from 'drizzle-orm'
 import type { DB } from '../db/connection'
 import { areas, entries, entryTags, entryTypes, links, sessions, stages, tags } from '../db/schema'
+import { isDateKey, toDateKey } from '@shared/dates'
 import { parseQuickAdd } from '@shared/quick-add-parser'
 import { isDoneToday, taskStatus } from '@shared/task-status'
 import type {
@@ -9,7 +10,10 @@ import type {
   EntryDetail,
   EntryPatch,
   EntrySearchResult,
+  MovePatch,
+  MovePlacement,
   ParentCandidate,
+  QuickAddContext,
   Stage,
   Tag,
   TaskFilter,
@@ -29,7 +33,13 @@ const nowIso = (now: Date): string => now.toISOString()
 
 /** Buduje wszystkie pozycje zadań z relacjami — jedno miejsce składania DTO. */
 function buildItems(db: DB): Map<number, BuiltItem> {
-  const allEntries = db.select().from(entries).where(isNull(entries.deletedAt)).all()
+  // Kolejność listy = ręczna kolejność (position), remis → kolejność utworzenia (id).
+  const allEntries = db
+    .select()
+    .from(entries)
+    .where(isNull(entries.deletedAt))
+    .orderBy(asc(entries.position), asc(entries.id))
+    .all()
   const allTypes = db.select().from(entryTypes).all()
   const allStages = db.select().from(stages).all()
   const allAreas = db.select().from(areas).all()
@@ -153,6 +163,8 @@ function matchesFilter(built: BuiltItem, filter: TaskFilter, now: Date): boolean
       return (
         built.item.activeSession != null ||
         built.item.plannedDate === today ||
+        // Zaległe przechodzą na dziś, dopóki nie są zrobione — nie znikają po północy.
+        (built.item.plannedDate != null && built.item.plannedDate < today && built.status !== 'done') ||
         (built.item.completedAt != null && toDateKey(new Date(built.item.completedAt)) === today)
       )
     case 'blocked':
@@ -290,7 +302,18 @@ export function getEntryDetail(db: DB, id: number): EntryDetail | null {
 }
 
 /** Częściowa aktualizacja wpisu (tytuł, opis, pola typu, obszar, daty, priorytet). */
+/** W bazie lądują tylko istniejące dni YYYY-MM-DD albo null — nigdy „2026-02-31" czy „jutro". */
+function assertDates(patch: { plannedDate?: string | null; dueDate?: string | null }): void {
+  for (const [field, value] of [
+    ['plannedDate', patch.plannedDate],
+    ['dueDate', patch.dueDate]
+  ] as const) {
+    if (typeof value === 'string' && !isDateKey(value)) throw new Error(`Nieprawidłowa data (${field}): ${value}`)
+  }
+}
+
 export function updateEntry(db: DB, id: number, patch: EntryPatch, now: Date = new Date()): EntryDetail {
+  assertDates(patch)
   const existing = db.select().from(entries).where(eq(entries.id, id)).get()
   if (!existing) throw new Error(`Wpis ${id} nie istnieje`)
   const set = {
@@ -388,13 +411,12 @@ export function toggleDone(db: DB, id: number, now: Date = new Date()): TaskList
   return updated
 }
 
-/** Szybkie dodawanie: surowa linia → nowy wpis. `ctx.areaId` = obszar z kontekstu (np. otwarty folder). */
-export function quickAdd(
-  db: DB,
-  line: string,
-  now: Date = new Date(),
-  ctx?: { areaId?: number | null }
-): number {
+/**
+ * Szybkie dodawanie: surowa linia → nowy wpis. `ctx.areaId` = obszar z kontekstu (otwarty folder),
+ * `ctx.plannedDate` = data widoku (filtr Dziś), żeby nowe zadanie nie znikało z listy; jawne `@` wygrywa.
+ */
+export function quickAdd(db: DB, line: string, now: Date = new Date(), ctx?: QuickAddContext): number {
+  assertDates({ plannedDate: ctx?.plannedDate })
   const parsed = parseQuickAdd(line, now)
 
   const typeKey = parsed.typeKey ?? 'task'
@@ -439,7 +461,8 @@ export function quickAdd(
       descriptionMd: null,
       data: {},
       priority: parsed.priority ?? null,
-      plannedDate: parsed.plannedDate ?? null,
+      plannedDate: parsed.plannedDate ?? ctx?.plannedDate ?? null,
+      position: nextEntryPosition(db),
       createdAt: nowIso(now),
       updatedAt: nowIso(now)
     })
@@ -466,9 +489,68 @@ export function quickAdd(
   return inserted.id
 }
 
-function toDateKey(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+/** Pozycja dla nowego wpisu: na końcu ręcznej kolejności. */
+export function nextEntryPosition(db: DB): number {
+  const last = db
+    .select({ position: entries.position })
+    .from(entries)
+    .orderBy(desc(entries.position))
+    .limit(1)
+    .get()
+  return (last?.position ?? -1) + 1
 }
+
+/**
+ * Przenosi wpis przed/za cel w globalnej kolejności (position). Widoki filtrują i grupują
+ * tę samą kolejność, więc upuszczenie „przed X" na liście = „przed X" globalnie, a wpisy
+ * ukryte filtrem zachowują względny porządek. Numeracja 0..n-1, zapis tylko zmienionych.
+ * `patch` (data/obszar sekcji docelowej) zapisuje się w tej samej transakcji co pozycja.
+ */
+export function moveEntry(
+  db: DB,
+  id: number,
+  targetId: number,
+  placement: MovePlacement,
+  patch?: MovePatch,
+  now: Date = new Date()
+): void {
+  if (patch) assertDates(patch) // przed jakimkolwiek zapisem — nic się nie zmienia przy błędzie
+  const hasPatch = patch !== undefined && (patch.plannedDate !== undefined || patch.areaId !== undefined)
+  if (id === targetId && !hasPatch) return
+  const ordered = db
+    .select({ id: entries.id, position: entries.position })
+    .from(entries)
+    .where(isNull(entries.deletedAt))
+    .orderBy(asc(entries.position), asc(entries.id))
+    .all()
+  const order = ordered.map((r) => r.id)
+  if (!order.includes(id)) throw new Error(`Wpis ${id} nie istnieje`)
+  if (!order.includes(targetId)) throw new Error(`Cel ${targetId} nie istnieje`)
+
+  const without = order.filter((x) => x !== id)
+  if (id !== targetId) {
+    const at = without.indexOf(targetId) + (placement === 'after' ? 1 : 0)
+    without.splice(at, 0, id)
+  }
+
+  const current = new Map(ordered.map((r) => [r.id, r.position]))
+  db.transaction((tx) => {
+    if (patch && hasPatch) {
+      tx.update(entries)
+        .set({
+          ...(patch.plannedDate !== undefined && { plannedDate: patch.plannedDate }),
+          ...(patch.areaId !== undefined && { areaId: patch.areaId }),
+          updatedAt: nowIso(now)
+        })
+        .where(eq(entries.id, id))
+        .run()
+    }
+    if (id === targetId) return
+    without.forEach((entryId, index) => {
+      if (current.get(entryId) !== index) {
+        tx.update(entries).set({ position: index }).where(eq(entries.id, entryId)).run()
+      }
+    })
+  })
+}
+

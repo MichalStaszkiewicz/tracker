@@ -104,6 +104,25 @@ export interface EntryDetail {
   children: TaskListItem[]
 }
 
+/** Grupowanie listy zadań. */
+export type TaskGroupBy = 'status' | 'area' | 'type' | 'date'
+export const TASK_GROUP_BYS: readonly TaskGroupBy[] = ['date', 'status', 'area', 'type']
+
+/** Kontekst widoku przy szybkim dodawaniu: otwarty obszar, data filtru „Dziś". Jawne `@` wygrywa. */
+export interface QuickAddContext {
+  areaId?: number | null
+  plannedDate?: string
+}
+
+/** Gdzie upuścić przenoszony wpis względem celu na liście. */
+export type MovePlacement = 'before' | 'after'
+
+/** Pola, które upuszczenie w innej sekcji listy może zmienić razem z pozycją (atomowo). */
+export interface MovePatch {
+  plannedDate?: string | null
+  areaId?: number | null
+}
+
 export interface EntryPatch {
   title?: string
   descriptionMd?: string | null

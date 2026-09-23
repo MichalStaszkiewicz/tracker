@@ -3,6 +3,7 @@ import type { Connection } from '../db/connection'
 import { makeTestDb } from '../db/test-utils'
 import { seedDemo } from '../db/seed'
 import { commitImport, listOffers, previewImport } from './offers'
+import { listTasks, moveEntry } from './entries'
 
 const NOW = new Date(2026, 8, 18, 14, 0, 0)
 let conn: Connection
@@ -48,5 +49,20 @@ describe('commitImport', () => {
     )
     expect(res.imported).toBe(1)
     expect(listOffers(conn.db)).toHaveLength(before + 1)
+  })
+
+  it('nowe oferty lądują na końcu ręcznej kolejności — także po przestawieniu listy', () => {
+    const ids = listTasks(conn.db, 'active', NOW).map((i) => i.id)
+    moveEntry(conn.db, ids[ids.length - 1], ids[0], 'before') // normalizuje pozycje do 0..n-1
+    commitImport(
+      conn.db,
+      [
+        { company: 'Pierwsza', position: 'Oferta A', url: 'https://x.example/a' },
+        { company: 'Druga', position: 'Oferta B', url: 'https://x.example/b' }
+      ],
+      NOW
+    )
+    const titles = listTasks(conn.db, 'active', NOW).map((i) => i.title)
+    expect(titles.slice(-2)).toEqual(['Oferta A', 'Oferta B'])
   })
 })

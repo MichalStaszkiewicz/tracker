@@ -83,6 +83,20 @@ describe('updateEntry', () => {
     expect(getEntryDetail(conn.db, id)!.area).toBeNull()
   })
 
+  it('ustawia i czyści datę planowaną', () => {
+    const id = idOf('Import Address Table')
+    expect(updateEntry(conn.db, id, { plannedDate: '2026-09-25' }).plannedDate).toBe('2026-09-25')
+    expect(updateEntry(conn.db, id, { title: 'bez zmiany daty' }).plannedDate).toBe('2026-09-25')
+    expect(updateEntry(conn.db, id, { plannedDate: null }).plannedDate).toBeNull()
+  })
+
+  it('odrzuca nieistniejącą datę i niczego nie zapisuje', () => {
+    const id = idOf('Import Address Table')
+    expect(() => updateEntry(conn.db, id, { plannedDate: '2026-02-31' })).toThrow(/data/i)
+    expect(() => updateEntry(conn.db, id, { dueDate: 'jutro' })).toThrow(/data/i)
+    expect(getEntryDetail(conn.db, id)!.plannedDate).not.toBe('2026-02-31')
+  })
+
   it('nadaje obszar wpisowi, który wcześniej go nie miał', () => {
     const id = idOf('Import Address Table')
     updateEntry(conn.db, id, { areaId: null })

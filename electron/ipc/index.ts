@@ -4,6 +4,9 @@ import type {
   EntryPatch,
   ImportOffer,
   ImportPreview,
+  MovePatch,
+  MovePlacement,
+  QuickAddContext,
   ScrapeCriteria,
   ScrapeSource,
   StatsPeriod,
@@ -18,6 +21,7 @@ import {
   listBoard,
   listParentCandidates,
   listTasks,
+  moveEntry,
   quickAdd,
   searchEntries,
   setStage,
@@ -49,11 +53,16 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.boardTypes, () => listBoardTypes(getDb()))
   ipcMain.handle(IPC.boardView, (_e, typeId: number) => listBoard(getDb(), typeId))
   ipcMain.handle(IPC.entryToggleDone, (_e, id: number) => toggleDone(getDb(), id))
-  ipcMain.handle(IPC.entryQuickAdd, (_e, line: string, ctx?: { areaId?: number | null }) =>
+  ipcMain.handle(IPC.entryQuickAdd, (_e, line: string, ctx?: QuickAddContext) =>
     quickAdd(getDb(), line, new Date(), ctx)
   )
   ipcMain.handle(IPC.entrySetStage, (_e, id: number, stageId: number) => setStage(getDb(), id, stageId))
   ipcMain.handle(IPC.entrySetType, (_e, id: number, typeId: number) => setType(getDb(), id, typeId))
+  ipcMain.handle(
+    IPC.entryMove,
+    (_e, id: number, targetId: number, placement: MovePlacement, patch?: MovePatch) =>
+      moveEntry(getDb(), id, targetId, placement, patch)
+  )
   ipcMain.handle(IPC.entryDetail, (_e, id: number) => getEntryDetail(getDb(), id))
   ipcMain.handle(IPC.entryUpdate, (_e, id: number, patch: EntryPatch) => updateEntry(getDb(), id, patch))
   ipcMain.handle(IPC.entryAddTag, (_e, id: number, group: string, name: string) =>

@@ -18,7 +18,8 @@ interface Props {
 export function SectionHeader({ count, gap, status, label }: Props) {
   const { t } = useT()
   const dot = status ? DOT[status] : { boxShadow: 'inset 0 0 0 1px var(--color-neutral-600)' }
-  const text = status ? t(`status.${status}` as StringKey) : label ?? ''
+  // Jawna etykieta wygrywa (np. sekcja „Zrobione" przy grupowaniu po dacie); status daje kropkę i domyślny tekst.
+  const text = label ?? (status ? t(`status.${status}` as StringKey) : '')
   return (
     <div className={`section${gap ? ' section--gap' : ''}`}>
       <span className="section__dot" style={dot} />

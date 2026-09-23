@@ -9,10 +9,13 @@ import type {
   EntrySearchResult,
   EntryType,
   ImportOffer,
+  MovePatch,
+  MovePlacement,
   ImportPreview,
   Link,
   OfferRow,
   ParentCandidate,
+  QuickAddContext,
   ScrapeCriteria,
   ScrapeSource,
   SessionActive,
@@ -42,6 +45,7 @@ export const IPC = {
   entryQuickAdd: 'entry:quickAdd',
   entrySetStage: 'entry:setStage',
   entrySetType: 'entry:setType',
+  entryMove: 'entry:move',
   entryDetail: 'entry:detail',
   entryUpdate: 'entry:update',
   entryAddTag: 'entry:addTag',
@@ -96,11 +100,13 @@ export interface TrackerApi {
   }
   entries: {
     toggleDone(id: number): Promise<TaskListItem>
-    quickAdd(line: string, ctx?: { areaId?: number | null }): Promise<number>
+    quickAdd(line: string, ctx?: QuickAddContext): Promise<number>
     parents(): Promise<ParentCandidate[]>
     search(q: string): Promise<EntrySearchResult[]>
     setStage(id: number, stageId: number): Promise<TaskListItem>
     setType(id: number, typeId: number): Promise<EntryDetail>
+    /** Ręczna kolejność: przenosi wpis przed/za cel; `patch` (data/obszar sekcji) w tej samej transakcji. */
+    move(id: number, targetId: number, placement: MovePlacement, patch?: MovePatch): Promise<void>
     detail(id: number): Promise<EntryDetail | null>
     update(id: number, patch: EntryPatch): Promise<EntryDetail>
     addTag(id: number, group: string, name: string): Promise<Tag>

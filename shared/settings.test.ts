@@ -15,4 +15,11 @@ describe('mergeSettings', () => {
     const out = mergeSettings({ nieistnieje: 1, backup: null })
     expect(out).toEqual(DEFAULT_SETTINGS)
   })
+  it('grupowanie zadań: domyślnie po dacie, zapamiętany wybór wygrywa', () => {
+    expect(DEFAULT_SETTINGS.tasksGroupBy).toBe('date')
+    expect(mergeSettings({ tasksGroupBy: 'area' }).tasksGroupBy).toBe('area')
+  })
+  it('niepoprawna wartość grupowania z bazy → domyślna', () => {
+    expect(mergeSettings({ tasksGroupBy: 'bzdura' }).tasksGroupBy).toBe('date')
+  })
 })
