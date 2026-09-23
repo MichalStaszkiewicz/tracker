@@ -143,6 +143,12 @@ describe('groupTasks — data', () => {
     expect(by('date:done')).toBeUndefined()
   })
 
+  it('sekcja zrobionych jest zablokowana jako źródło (data zrobionego nie zmienia sekcji)', () => {
+    const g = groupTasks(list, 'date', { now: NOW })
+    expect(g.find((x) => x.key === 'date:done')?.locked).toBe(true)
+    expect(g.find((x) => x.key === 'date:overdue')?.locked).toBeFalsy() // zaległe można przełożyć na dziś
+  })
+
   it('ensureDateBuckets: puste Dziś/Jutro/Bez daty jako strefy upuszczania', () => {
     const g = groupTasks([make({ id: 9, title: 'x', plannedDate: '2026-09-25' })], 'date', { now: NOW, ensureDateBuckets: true })
     expect(g.map((x) => x.key)).toEqual(['date:today', 'date:tomorrow', 'date:2026-09-25', 'date:none'])

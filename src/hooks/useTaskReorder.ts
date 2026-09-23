@@ -7,7 +7,8 @@ import {
   placementFromPointer,
   planDrop,
   type DropPlan,
-  type DropTarget
+  type DropTarget,
+  type GroupRef
 } from '@/lib/list-dnd'
 import type { TaskGroup } from '@/lib/task-view'
 import type { MovePlacement, TaskListItem } from '@shared/types'
@@ -33,7 +34,7 @@ export interface SectionReorder {
 
 interface Drag {
   id: number
-  fromKey: string
+  from: GroupRef
 }
 
 interface Over {
@@ -44,14 +45,18 @@ interface Over {
 const sameOver = (a: Over | null, b: Over | null): boolean =>
   a?.groupKey === b?.groupKey && a?.target?.id === b?.target?.id && a?.target?.placement === b?.target?.placement
 
+/** Fokus + przewinięcie: po Alt+↑/↓ karta może wyjechać poza widoczną część listy. */
 const focusCard = (id: number): void => {
-  document.querySelector<HTMLElement>(`[data-task-id="${id}"]`)?.focus()
+  const el = document.querySelector<HTMLElement>(`[data-task-id="${id}"]`)
+  if (!el) return
+  el.focus({ preventScroll: true })
+  el.scrollIntoView({ block: 'nearest' })
 }
 
 /**
  * Przeciąganie zadań w obrębie listy: zmiana kolejności oraz przenoszenie między sekcjami,
  * które mają `patch` (data, obszar). Reaguje tylko na przeciągnięcia rozpoczęte na tej liście.
- * getData() jest niedostępne podczas dragover — id przeciąganej karty trzymamy w refie.
+ * getData() jest niedostępne podczas dragover — przeciągane zadanie trzymamy w refie.
  */
 export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMoved: () => Promise<void> | void }) {
   const [drag, setDrag] = useState<Drag | null>(null)
@@ -74,6 +79,11 @@ export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMov
   const ours = (e: DragEvent<HTMLElement>): Drag | null =>
     dragRef.current && e.dataTransfer.types.includes(TASK_DND_TYPE) ? dragRef.current : null
 
+  const accept = (e: DragEvent<HTMLElement>): void => {
+    e.preventDefault() // bez tego Chromium nie wyśle `drop`
+    e.dataTransfer.dropEffect = 'move'
+  }
+
   const apply = async (id: number, plan: DropPlan): Promise<void> => {
     try {
       if (plan.target) await api.entries.move(id, plan.target.id, plan.target.placement, plan.patch)
@@ -90,14 +100,14 @@ export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMov
     reset()
     if (!d || !o) return
     const group = groups.find((g) => g.key === o.groupKey)
-    const plan = group ? planDrop(d.id, d.fromKey, group, o.target) : null
+    const plan = group ? planDrop(d.id, d.from, group, o.target) : null
     if (plan) void apply(d.id, plan)
   }
 
   const bindCard = (item: TaskListItem, group: TaskGroup): CardReorder => ({
     indicator: over?.groupKey === group.key && over.target?.id === item.id ? over.target.placement : null,
     onDragStart: () => {
-      const d = { id: item.id, fromKey: group.key }
+      const d: Drag = { id: item.id, from: { key: group.key, patch: group.patch, locked: group.locked } }
       dragRef.current = d
       setDrag(d)
     },
@@ -105,13 +115,12 @@ export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMov
     onDragOver: (e) => {
       const d = ours(e)
       if (!d) return
-      e.stopPropagation() // odstępy obsługuje sekcja
-      if (!canDrop(d.fromKey, group)) {
+      e.stopPropagation() // odstępy obsługuje sekcja/lista
+      if (!canDrop(d.from, group)) {
         updateOver(null) // bez preventDefault → kursor „niedozwolone"
         return
       }
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'move'
+      accept(e)
       if (item.id === d.id) {
         updateOver({ groupKey: group.key }) // własne miejsce: bez linii, upuszczenie = nic
         return
@@ -137,26 +146,45 @@ export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMov
       ? 'idle'
       : over?.groupKey === group.key
         ? 'over'
-        : canDrop(drag.fromKey, group)
+        : canDrop(drag.from, group)
           ? 'accept'
           : 'refuse',
     onDragOver: (e) => {
       const d = ours(e)
-      if (!d || !canDrop(d.fromKey, group)) return
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'move'
+      if (!d) return
+      e.stopPropagation()
+      if (!canDrop(d.from, group)) {
+        updateOver(null) // nie zostawiaj linii z poprzedniej sekcji nad taką, która odrzuca
+        return
+      }
+      accept(e)
       // Odstęp w tej sekcji zachowuje linię przy karcie; nagłówek/pusta strefa = sama sekcja.
       if (overRef.current?.groupKey !== group.key) updateOver({ groupKey: group.key })
     },
     onDrop: (e) => {
       if (!dragRef.current) return
       e.preventDefault()
+      e.stopPropagation()
       commit()
     }
   })
 
-  /** Wyjście kursora poza listę (np. na sidebar) czyści wskaźnik. */
+  /**
+   * Poziom listy: odstępy między sekcjami i miejsce pod ostatnią — tam rysuje się linia „za
+   * ostatnią kartą", więc upuszczenie ma zadziałać, jeśli linia jest widoczna. Wyjście poza listę
+   * (np. na sidebar) czyści wskaźnik.
+   */
   const listProps = {
+    onDragOver: (e: DragEvent<HTMLElement>) => {
+      if (!ours(e)) return
+      if (overRef.current?.target) accept(e)
+      else updateOver(null)
+    },
+    onDrop: (e: DragEvent<HTMLElement>) => {
+      if (!dragRef.current) return
+      e.preventDefault()
+      commit()
+    },
     onDragLeave: (e: DragEvent<HTMLElement>) => {
       const next = e.relatedTarget as Node | null
       if (!next || !e.currentTarget.contains(next)) updateOver(null)

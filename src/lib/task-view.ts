@@ -35,6 +35,8 @@ export interface TaskGroup {
    * tylko zmianę kolejności własnych zadań (status i typ są wyliczane / zbyt destrukcyjne).
    */
   patch?: MovePatch
+  /** Zadań z tej sekcji nie da się przeciągnąć do innych (tylko zmiana kolejności w środku). */
+  locked?: boolean
   items: TaskListItem[]
 }
 
@@ -107,6 +109,8 @@ function groupByDate(tasks: TaskListItem[], opts: GroupOptions): TaskGroup[] {
       date: { kind, dateKey },
       status: kind === 'done' ? 'done' : undefined,
       patch,
+      // Zrobione trafiają do „Zrobione" niezależnie od daty — zmiana daty nic by nie przeniosła.
+      locked: kind === 'done' ? true : undefined,
       items: []
     }
     map.set(key, g)

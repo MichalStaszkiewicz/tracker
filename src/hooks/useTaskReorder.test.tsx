@@ -177,6 +177,57 @@ describe('useTaskReorder', () => {
     await waitFor(() => expect(move).toHaveBeenCalledWith(2, 1, 'before', undefined))
   })
 
+  it('regresja: puszczenie na linii pod ostatnią kartą (odstęp listy) przenosi na koniec sekcji', async () => {
+    const { container } = mount([{ key: 'todo', label: null, items: [make(1), make(2), make(3)] }])
+    const dt = makeDataTransfer()
+    fireEvent.dragStart(card(1), { dataTransfer: dt })
+    fireEvent.dragOver(card(3), { dataTransfer: dt, clientY: 135 }) // linia pod ostatnią kartą
+    const list = container.querySelector('.list')
+    if (!list) throw new Error('brak listy')
+    const notPrevented = fireEvent.dragOver(list, { dataTransfer: dt }) // kursor w odstępie, na linii
+    expect(notPrevented).toBe(false) // lista przyjmuje upuszczenie, które obiecuje linia
+    expect(card(3).className).toContain('card--drop-after')
+    fireEvent.drop(list, { dataTransfer: dt })
+    await waitFor(() => expect(move).toHaveBeenCalledWith(1, 3, 'after', undefined))
+  })
+
+  it('regresja: nad sekcją, która odrzuca zadanie, znika stara linia', () => {
+    const { container } = mount([
+      { key: 'todo', label: null, items: [make(1), make(2)] },
+      { key: 'done', label: null, items: [make(3)] }
+    ])
+    const dt = makeDataTransfer()
+    fireEvent.dragStart(card(1), { dataTransfer: dt })
+    fireEvent.dragOver(card(2), { dataTransfer: dt, clientY: 135 })
+    expect(card(2).className).toContain('card--drop-after')
+    fireEvent.dragOver(container.querySelectorAll('.tsection')[1], { dataTransfer: dt }) // nagłówek „done"
+    expect(card(2).className).not.toContain('card--drop-')
+  })
+
+  it('regresja: zadania z zablokowanej sekcji „Zrobione" nie da się upuścić na „Jutro"', async () => {
+    const { getByText, container } = mount([
+      { key: 'date:tomorrow', label: null, patch: { plannedDate: '2026-09-24' }, items: [] },
+      { key: 'date:done', label: null, locked: true, items: [make(1)] }
+    ])
+    const dt = makeDataTransfer()
+    fireEvent.dragStart(card(1), { dataTransfer: dt })
+    expect(container.querySelector('.tsection--refuse')).not.toBeNull()
+    const zone = getByText('upuść:date:tomorrow')
+    fireEvent.dragOver(zone, { dataTransfer: dt })
+    fireEvent.drop(zone, { dataTransfer: dt })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(update).not.toHaveBeenCalled()
+    expect(move).not.toHaveBeenCalled()
+  })
+
+  it('regresja: po Alt+↓ lista przewija się do przesuniętej karty', async () => {
+    const scroll = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scroll, configurable: true })
+    mount([{ key: 'todo', label: null, items: [make(1), make(2), make(3)] }])
+    fireEvent.keyDown(card(2), { key: 'ArrowDown', altKey: true })
+    await waitFor(() => expect(scroll).toHaveBeenCalledWith({ block: 'nearest' }))
+  })
+
   it('Alt+↑ na pierwszej karcie sekcji nic nie robi', async () => {
     mount([{ key: 'todo', label: null, items: [make(1), make(2)] }])
     fireEvent.keyDown(card(1), { key: 'ArrowUp', altKey: true })

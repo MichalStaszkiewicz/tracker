@@ -20,17 +20,21 @@ export interface DropPlan {
   target?: DropTarget
 }
 
-type GroupRef = Pick<TaskGroup, 'key' | 'patch'>
+export type GroupRef = Pick<TaskGroup, 'key' | 'patch' | 'locked'>
 
-/** W obrębie tej samej sekcji — zawsze (kolejność). Do innej — tylko gdy sekcja ma `patch`. */
-export function canDrop(fromGroupKey: string, to: GroupRef): boolean {
-  return to.key === fromGroupKey || to.patch !== undefined
+/**
+ * W obrębie tej samej sekcji — zawsze (kolejność). Do innej — tylko gdy docelowa ma `patch`,
+ * a źródłowa nie jest zablokowana (np. „Zrobione": nowa data i tak nie przeniosłaby zadania).
+ */
+export function canDrop(from: GroupRef, to: GroupRef): boolean {
+  if (to.key === from.key) return true
+  return to.patch !== undefined && !from.locked
 }
 
 /** Plan upuszczenia albo null, gdy nic by się nie zmieniło lub sekcja nie przyjmuje zadania. */
-export function planDrop(taskId: number, fromGroupKey: string, to: GroupRef, target?: DropTarget): DropPlan | null {
-  if (!canDrop(fromGroupKey, to)) return null
-  const patch = to.key !== fromGroupKey ? to.patch : undefined
+export function planDrop(taskId: number, from: GroupRef, to: GroupRef, target?: DropTarget): DropPlan | null {
+  if (!canDrop(from, to)) return null
+  const patch = to.key !== from.key ? to.patch : undefined
   const move = target && target.id !== taskId ? target : undefined
   if (!patch && !move) return null
   return { patch, target: move }
