@@ -246,7 +246,20 @@ button { font-family: var(--font-body); }
 .section__count { font: 400 10px var(--mono); color: var(--color-neutral-500); }
 
 /* --- Task card --- */
-.card { display: flex; gap: 13px; padding: 13px 15px 13px 12px; border-radius: 10px; background: var(--color-surface); text-align: left; border: 0; width: 100%; cursor: pointer; box-shadow: inset 0 0 0 1px transparent; transition: opacity 0.2s ease, box-shadow 0.15s ease; animation: cardIn 0.16s ease; }
+.card { position: relative; display: flex; gap: 13px; padding: 13px 15px 13px 12px; border-radius: 10px; background: var(--color-surface); text-align: left; border: 0; width: 100%; cursor: pointer; box-shadow: inset 0 0 0 1px transparent; transition: opacity 0.2s ease, box-shadow 0.15s ease; animation: cardIn 0.16s ease; }
+.card:focus-visible { outline: none; box-shadow: inset 0 0 0 1px var(--color-accent-600); }
+/* Wskaźnik upuszczenia: linia w odstępie między kartami (pseudo-element — karty się nie przesuwają). */
+.card--drop-before::before,
+.card--drop-after::after { content: ''; position: absolute; left: 6px; right: 6px; height: 2px; border-radius: 2px; background: var(--color-accent); pointer-events: none; }
+.card--drop-before::before { top: -6px; }
+.card--drop-after::after { bottom: -6px; }
+
+/* --- Sekcje listy zadań --- */
+.tsection { display: flex; flex-direction: column; gap: 9px; transition: opacity 0.15s ease; }
+.tsection--refuse { opacity: 0.45; }
+.tsection__drop { height: 38px; display: grid; place-items: center; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--color-neutral-800); font: 400 11px var(--mono); color: var(--color-neutral-600); transition: box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease; }
+.tsection--accept .tsection__drop { box-shadow: inset 0 0 0 1px var(--color-neutral-700); color: var(--color-neutral-400); }
+.tsection--over .tsection__drop { box-shadow: inset 0 0 0 1px var(--color-accent-700); color: var(--color-accent-300); background: color-mix(in srgb, var(--color-accent) 7%, transparent); }
 .card:hover { box-shadow: inset 0 0 0 1px var(--color-neutral-800); }
 .card--active { box-shadow: inset 0 0 0 1px var(--color-accent-800); }
 .card--active:hover { box-shadow: inset 0 0 0 1px var(--color-accent-600); }
@@ -318,6 +331,14 @@ button { font-family: var(--font-body); }
 .menu__item:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); color: var(--color-text); }
 .menu__item--active { color: var(--color-accent-100); }
 .menu__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu__hint { flex: none; font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
+.menu__foot { margin-top: 4px; padding: 6px 4px 2px; background: var(--hair) no-repeat top / 100% 1px; }
+
+/* --- Date picker --- */
+.datepick__value { color: var(--color-text); }
+.datepick__empty { color: var(--color-neutral-500); }
+.datepick__input { display: flex; flex-direction: column; gap: 5px; padding: 0 6px; }
+.datepick__preview { min-height: 14px; font: 400 10.5px var(--mono); color: var(--color-neutral-500); }
 
 /* --- Filter bar extras --- */
 .filterbar__spacer { margin-left: auto; }

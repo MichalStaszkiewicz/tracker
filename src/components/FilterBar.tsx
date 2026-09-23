@@ -6,7 +6,7 @@ import { Icon } from './Icon'
 import { Menu, type MenuItem } from './Menu'
 
 const FILTERS: TaskFilter[] = ['active', 'today', 'blocked', 'done']
-const GROUPS: GroupBy[] = ['status', 'area', 'type']
+const GROUPS: GroupBy[] = ['status', 'date', 'area', 'type']
 
 interface Props {
   filter: TaskFilter

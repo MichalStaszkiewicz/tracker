@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
+import { TASK_DND_TYPE } from '@/lib/list-dnd'
 import type { Area } from '@shared/types'
 import { Icon } from './Icon'
 
 export type NavKey = 'tasks' | 'inbox' | 'board' | 'offers' | 'stats' | 'profile' | 'settings'
-
-/** Typ MIME ustawiany przez TaskCard — pozwala odrzucić przeciąganie zwykłego tekstu. */
-const TASK_DND_TYPE = 'application/x-task-id'
 
 interface NavDef {
   key: NavKey

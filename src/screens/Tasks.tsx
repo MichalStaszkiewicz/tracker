@@ -4,17 +4,20 @@ import { FilterBar } from '@/components/FilterBar'
 import { Icon } from '@/components/Icon'
 import { QuickAdd } from '@/components/QuickAdd'
 import { ScreenHeader } from '@/components/ScreenHeader'
-import { SectionHeader } from '@/components/SectionHeader'
 import { SessionWidget } from '@/components/SessionWidget'
 import { TaskCard } from '@/components/TaskCard'
+import { TaskSection } from '@/components/TaskSection'
 import { useActiveSession } from '@/hooks/useActiveSession'
 import { useHotkeys } from '@/hooks/useHotkeys'
 import { useTags, useTypes } from '@/hooks/useLookups'
+import { useTaskReorder } from '@/hooks/useTaskReorder'
 import { useTasks } from '@/hooks/useTasks'
 import { useT } from '@/i18n'
-import { filterTasks, groupTasks, type GroupBy } from '@/lib/task-view'
+import { weekdayDate } from '@/lib/dates'
+import { filterTasks, groupTasks, type GroupBy, type TaskGroup } from '@/lib/task-view'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useSettingsCtx } from '@/settings-context'
+import { toDateKey } from '@shared/dates'
 import { taskStatus } from '@shared/task-status'
 import type { TaskFilter } from '@shared/types'
 
@@ -46,8 +49,32 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
     () => filterTasks(tasks, { areaId: areaFilter?.id, typeKey, tagId, query }),
     [tasks, areaFilter, typeKey, tagId, query]
   )
-  const groups = useMemo(() => groupTasks(filtered, groupBy), [filtered, groupBy])
+  // Przy grupowaniu po dacie Dziś/Jutro/Bez daty są zawsze widoczne — można na nie przeciągnąć.
+  const ensureDateBuckets = groupBy === 'date' && (filter === 'active' || filter === 'today')
+  const groups = useMemo(
+    () => groupTasks(filtered, groupBy, { ensureDateBuckets }),
+    [filtered, groupBy, ensureDateBuckets]
+  )
+  const reorder = useTaskReorder({ groups, onMoved: refetch })
   const activeCount = filtered.filter((it) => taskStatus(it) !== 'done').length
+
+  const sectionLabel = (g: TaskGroup): string | undefined => {
+    switch (g.date?.kind) {
+      case 'overdue':
+        return t('date.overdue')
+      case 'today':
+        return t('date.today')
+      case 'tomorrow':
+        return t('date.tomorrow')
+      case 'day':
+        return g.date.dateKey ? weekdayDate(g.date.dateKey, lang) : undefined
+      case 'none':
+        return t('date.none')
+      case 'done':
+        return undefined // nagłówek bierze etykietę statusu „zrobione"
+    }
+    return g.label === '—' ? t('area.none') : g.label ?? undefined
+  }
 
   const dateLabel = new Intl.DateTimeFormat(lang === 'pl' ? 'pl-PL' : 'en-US', {
     day: 'numeric',
@@ -60,8 +87,11 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
   }
 
   const add = async (line: string) => {
-    // W otwartym folderze obszaru nowe zadanie dziedziczy ten obszar (zostaje widoczne).
-    await api.entries.quickAdd(line, { areaId: areaFilter?.id })
+    // Nowe zadanie ma zostać widoczne: dziedziczy otwarty obszar, a w widoku Dziś — dzisiejszą datę.
+    await api.entries.quickAdd(line, {
+      areaId: areaFilter?.id,
+      plannedDate: filter === 'today' ? toDateKey(new Date()) : undefined
+    })
     await Promise.all([refetch(), reloadTags()])
   }
 
@@ -108,19 +138,27 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
         onClearArea={onClearArea}
       />
 
-      <div className="list">
+      <div className="list" {...reorder.listProps}>
         {groups.map((g, i) => (
-          <div key={g.key} style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <SectionHeader
-              status={g.status}
-              label={g.label === '—' ? t('area.none') : g.label ?? undefined}
-              count={g.items.length}
-              gap={i > 0}
-            />
+          <TaskSection
+            key={g.key}
+            status={g.status}
+            label={sectionLabel(g)}
+            count={g.items.length}
+            gap={i > 0}
+            drop={reorder.bindSection(g)}
+            emptyHint={t('list.dropHere')}
+          >
             {g.items.map((item) => (
-              <TaskCard key={item.id} item={item} onToggle={toggle} onOpen={onOpenEntry} />
+              <TaskCard
+                key={item.id}
+                item={item}
+                onToggle={toggle}
+                onOpen={onOpenEntry}
+                reorder={reorder.bindCard(item, g)}
+              />
             ))}
-          </div>
+          </TaskSection>
         ))}
       </div>
 
