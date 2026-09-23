@@ -36,7 +36,7 @@ export function DatePicker({ value, onChange, ariaLabel, align = 'left' }: Props
     { key: today, label: t('date.today') },
     { key: addDaysKey(today, 1), label: t('date.tomorrow') },
     { key: nextWeekdayKey(now, 1), label: t('date.nextWeek') }
-  ]
+  ].filter((q, i, all) => all.findIndex((o) => o.key === q.key) === i) // w niedzielę „przyszły tydzień" = jutro
   const items: MenuItem[] = [
     ...quick.map((q) => ({ key: q.key, label: q.label, hint: weekdayDate(q.key, lang) })),
     ...(value ? [{ key: CLEAR, label: t('date.clear'), icon: 'x' }] : [])

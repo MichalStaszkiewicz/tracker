@@ -64,4 +64,22 @@ describe('DatePicker', () => {
     fireEvent.click(screen.getByText('Usuń datę'))
     expect(onChange).toHaveBeenCalledWith(null)
   })
+
+  it('w niedzielę nie dubluje poniedziałku (Jutro = Przyszły tydzień) — regresja', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(new Date(2026, 8, 27, 12, 0, 0)) // niedziela
+      mount(null)
+      open()
+      expect(screen.getByText('Jutro')).toBeTruthy()
+      expect(screen.queryByText('Przyszły tydzień')).toBeNull()
+      cleanup()
+      vi.setSystemTime(new Date(2026, 8, 23, 12, 0, 0)) // środa
+      mount(null)
+      open()
+      expect(screen.getByText('Przyszły tydzień')).toBeTruthy()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
