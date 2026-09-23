@@ -2,6 +2,7 @@ import { and, eq, isNull } from 'drizzle-orm'
 import type { DB } from '../db/connection'
 import { areas, entries, entryTypes, stages } from '../db/schema'
 import { normalizeUrl, urlHost } from '@shared/url'
+import { nextEntryPosition } from './entries'
 import type { ImportOffer, ImportPreview, OfferRow } from '@shared/types'
 
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
@@ -81,9 +82,10 @@ export function commitImport(db: DB, offers: ImportOffer[], now: Date = new Date
   const iso = now.toISOString()
 
   const { newItems } = categorize(existingUrls(db), offers)
+  const basePosition = nextEntryPosition(db) // nowe oferty na końcu ręcznej kolejności
   // Atomowo: albo wchodzą wszystkie nowe, albo żadna (bez połowicznego importu).
   db.transaction((tx) => {
-    for (const o of newItems) {
+    for (const [i, o] of newItems.entries()) {
       const data: Record<string, unknown> = {}
       if (o.company) data.company = o.company
       if (o.url) data.url = o.url
@@ -97,6 +99,7 @@ export function commitImport(db: DB, offers: ImportOffer[], now: Date = new Date
           stageId: firstStage?.id ?? null,
           title: (o.position || o.company || 'Oferta').trim(),
           data,
+          position: basePosition + i,
           createdAt: iso,
           updatedAt: iso
         })
