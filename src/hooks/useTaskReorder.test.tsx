@@ -6,6 +6,10 @@ import type { TaskGroup } from '@/lib/task-view'
 import type { TaskListItem } from '@shared/types'
 
 // jsdom nie ma DragEvent — polyfill na bazie MouseEvent, żeby clientY trafiało do zdarzenia.
+// jsdom nie implementuje scrollIntoView (przeglądarka zawsze ma) — bez stuba Alt+↑/↓ rzuca w rAF.
+const scrollIntoView = vi.fn()
+Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scrollIntoView, configurable: true })
+
 if (!('DragEvent' in window)) {
   Object.defineProperty(window, 'DragEvent', { value: class extends MouseEvent {} })
 }
@@ -221,11 +225,10 @@ describe('useTaskReorder', () => {
   })
 
   it('regresja: po Alt+↓ lista przewija się do przesuniętej karty', async () => {
-    const scroll = vi.fn()
-    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { value: scroll, configurable: true })
+    scrollIntoView.mockClear()
     mount([{ key: 'todo', label: null, items: [make(1), make(2), make(3)] }])
     fireEvent.keyDown(card(2), { key: 'ArrowDown', altKey: true })
-    await waitFor(() => expect(scroll).toHaveBeenCalledWith({ block: 'nearest' }))
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' }))
   })
 
   it('regresja: przeciągnięcie ponad listę przewija ją w górę, a po puszczeniu przestaje', async () => {
