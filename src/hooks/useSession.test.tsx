@@ -125,6 +125,23 @@ describe('useSession', () => {
     expect(group).toHaveBeenCalledWith(5)
   })
 
+  it('spóźniona odpowiedź refresh() nie przywraca sesji, którą w międzyczasie zakończono', async () => {
+    const { result } = await running()
+    await act(() => result.current.pause())
+    let release: (v: PausedSession) => void = () => {}
+    group.mockImplementationOnce(() => new Promise<PausedSession>((r) => (release = r)))
+    let pending: Promise<void> = Promise.resolve()
+    act(() => {
+      pending = result.current.refresh()
+    })
+    await act(() => result.current.stop()) // użytkownik zamyka wstrzymaną sesję, zanim refresh wróci
+    await act(async () => {
+      release(p(5, 42, 120))
+      await pending
+    })
+    expect(result.current.paused).toBeNull()
+  })
+
   it('błąd api (np. usunięte zadanie) → synchronizacja z bazą', async () => {
     const { result } = await running()
     switchFn.mockRejectedValueOnce(new Error('Wpis 999 nie istnieje'))

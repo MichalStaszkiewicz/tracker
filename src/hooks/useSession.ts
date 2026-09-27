@@ -96,9 +96,16 @@ export function useSession(): SessionApi {
     else await start(null)
   }, [active, paused, stop, resume, start])
 
+  // Odpowiedź przyjmujemy tylko, jeśli dotyczy wciąż tej samej sesji — inaczej spóźniony refresh
+  // mógłby przywrócić sesję zatrzymaną / wznowioną w międzyczasie.
   const refresh = useCallback(async () => {
-    if (active) setActive(await api.sessions.active())
-    else if (paused) setPaused(await api.sessions.group(paused.groupId))
+    if (active) {
+      const fresh = await api.sessions.active()
+      setActive((cur) => (cur && fresh && cur.id === fresh.id ? fresh : cur))
+    } else if (paused) {
+      const fresh = await api.sessions.group(paused.groupId)
+      setPaused((cur) => (cur && fresh && cur.groupId === fresh.groupId ? fresh : cur))
+    }
   }, [active, paused])
 
   return useMemo(
