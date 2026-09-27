@@ -43,7 +43,11 @@ const api: TrackerApi = {
   sessions: {
     active: () => ipcRenderer.invoke(IPC.sessionActive),
     start: (entryId) => ipcRenderer.invoke(IPC.sessionStart, entryId),
-    stop: () => ipcRenderer.invoke(IPC.sessionStop)
+    stop: () => ipcRenderer.invoke(IPC.sessionStop),
+    switch: (entryId, pausedGroupId) => ipcRenderer.invoke(IPC.sessionSwitch, entryId, pausedGroupId),
+    pause: () => ipcRenderer.invoke(IPC.sessionPause),
+    resume: (groupId) => ipcRenderer.invoke(IPC.sessionResume, groupId),
+    group: (groupId) => ipcRenderer.invoke(IPC.sessionGroup, groupId)
   },
   stats: {
     get: (period) => ipcRenderer.invoke(IPC.statsGet, period)

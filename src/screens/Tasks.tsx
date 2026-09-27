@@ -1,22 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '@/api'
 import { FilterBar } from '@/components/FilterBar'
 import { Icon } from '@/components/Icon'
 import { QuickAdd } from '@/components/QuickAdd'
 import { ScreenHeader } from '@/components/ScreenHeader'
-import { SessionWidget } from '@/components/SessionWidget'
 import { TaskCard } from '@/components/TaskCard'
 import { TaskSection } from '@/components/TaskSection'
-import { useActiveSession } from '@/hooks/useActiveSession'
-import { useHotkeys } from '@/hooks/useHotkeys'
 import { useTags, useTypes } from '@/hooks/useLookups'
 import { useTaskReorder } from '@/hooks/useTaskReorder'
 import { useTasks } from '@/hooks/useTasks'
+import { useRefetchOnChange } from '@/hooks/useRefetchOnChange'
 import { useToday } from '@/hooks/useToday'
 import { useT } from '@/i18n'
 import { weekdayDate } from '@/lib/dates'
 import { filterTasks, groupTasks, type GroupBy, type TaskGroup } from '@/lib/task-view'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
+import { useSessionCtx } from '@/session-context'
 import { useSettingsCtx } from '@/settings-context'
 import { fromDateKey, toDateKey } from '@shared/dates'
 import { taskStatus } from '@shared/task-status'
@@ -40,13 +39,15 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
   const { tasks, refetch } = useTasks(filter, refreshToken)
   const types = useTypes()
   const { tags, reload: reloadTags } = useTags()
-  const session = useActiveSession()
-  const { shortcuts, settings, set } = useSettingsCtx()
+  const session = useSessionCtx()
+  const { settings, set } = useSettingsCtx()
   // Grupowanie zapamiętane w ustawieniach (domyślnie po dacie).
   const groupBy: GroupBy = settings.tasksGroupBy
   const setGroupBy = (g: GroupBy) => set('tasksGroupBy', g)
 
-  useHotkeys({ [shortcuts.session]: () => void session.toggle() })
+  // Znacznik trwającej sesji na kartach pochodzi z listy — odśwież ją, gdy sesja się zmieni
+  // (także gdy ⇆ przypina zadanie do tego samego odcinka: id się nie zmienia, zadanie tak).
+  useRefetchOnChange(session.active ? `${session.active.id}:${session.active.entryId ?? ''}` : null, refetch)
 
   const filtered = useMemo(
     () => filterTasks(tasks, { areaId: areaFilter?.id, typeKey, tagId, query }),
@@ -67,7 +68,11 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
     dayOfFetch.current = today
     void refetch()
   }, [today, refetch])
-  const reorder = useTaskReorder({ groups, onMoved: refetch })
+  const onMoved = useCallback(async () => {
+    await refetch()
+    void session.refresh() // przeniesienie mogło zmienić obszar zadania z sesji (kolor w widżecie)
+  }, [refetch, session])
+  const reorder = useTaskReorder({ groups, onMoved })
   const activeCount = filtered.filter((it) => taskStatus(it) !== 'done').length
 
   const sectionLabel = (g: TaskGroup): string | undefined => {
@@ -106,8 +111,6 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
     })
     await Promise.all([refetch(), reloadTags()])
   }
-
-  const activeTask = tasks.find((it) => it.id === session.active?.entryId) ?? null
 
   return (
     <div className="screen">
@@ -175,14 +178,6 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
       </div>
 
       <QuickAdd onSubmit={add} />
-
-      <SessionWidget
-        active={session.active}
-        elapsed={session.elapsed}
-        entryTitle={activeTask?.title ?? null}
-        areaColor={activeTask?.area?.color ?? null}
-        onStop={session.stop}
-      />
     </div>
   )
 }

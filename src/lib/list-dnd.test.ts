@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TaskListItem } from '@shared/types'
-import { canDrop, keyboardTarget, placementFromPointer, planDrop } from './list-dnd'
+import { autoScrollStep, canDrop, keyboardTarget, placementFromPointer, planDrop } from './list-dnd'
 import type { TaskGroup } from './task-view'
 
 function make(id: number): TaskListItem {
@@ -89,5 +89,25 @@ describe('keyboardTarget', () => {
   it('brzeg sekcji → null', () => {
     expect(keyboardTarget(group, 1, -1)).toBeNull()
     expect(keyboardTarget(group, 3, 1)).toBeNull()
+  })
+})
+
+describe('autoScrollStep', () => {
+  const box = { top: 100, bottom: 600, left: 200, right: 900 }
+  it('środek listy → brak przewijania', () => {
+    expect(autoScrollStep(box, 500, 350)).toBe(0)
+  })
+  it('przy górnej krawędzi → w górę, szybciej im bliżej', () => {
+    const far = autoScrollStep(box, 500, 150)
+    const near = autoScrollStep(box, 500, 110)
+    expect(far).toBeLessThan(0)
+    expect(near).toBeLessThan(far)
+  })
+  it('nad listą (za wysoko) → pełna prędkość w górę; pod listą → w dół', () => {
+    expect(autoScrollStep(box, 500, 20)).toBe(-14)
+    expect(autoScrollStep(box, 500, 700)).toBe(14)
+  })
+  it('poza listą w poziomie (sidebar) → 0', () => {
+    expect(autoScrollStep(box, 100, 20)).toBe(0)
   })
 })

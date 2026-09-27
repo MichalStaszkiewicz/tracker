@@ -52,3 +52,24 @@ export function keyboardTarget(group: TaskGroup, taskId: number, dir: -1 | 1): D
   if (!neighbor) return null
   return { id: neighbor.id, placement: dir < 0 ? 'before' : 'after' }
 }
+
+export interface Box {
+  top: number
+  bottom: number
+  left: number
+  right: number
+}
+
+/**
+ * Auto-przewijanie listy podczas przeciągania: px na klatkę (ujemne = w górę). Im bliżej
+ * krawędzi, tym szybciej; nad listą / pod nią — pełna prędkość. Poza listą w poziomie
+ * (np. nad sidebarem z obszarami) — 0, żeby nie przeszkadzać w upuszczaniu na obszar.
+ */
+export function autoScrollStep(box: Box, x: number, y: number, edge = 64, max = 14): number {
+  if (x < box.left || x > box.right) return 0
+  const up = box.top + edge - y
+  if (up > 0) return -Math.ceil(max * Math.min(1, up / edge))
+  const down = y - (box.bottom - edge)
+  if (down > 0) return Math.ceil(max * Math.min(1, down / edge))
+  return 0
+}

@@ -15,6 +15,7 @@ import type {
   Link,
   OfferRow,
   ParentCandidate,
+  PausedSession,
   QuickAddContext,
   ScrapeCriteria,
   ScrapeSource,
@@ -57,6 +58,10 @@ export const IPC = {
   sessionActive: 'session:active',
   sessionStart: 'session:start',
   sessionStop: 'session:stop',
+  sessionSwitch: 'session:switch',
+  sessionPause: 'session:pause',
+  sessionResume: 'session:resume',
+  sessionGroup: 'session:group',
 
   statsGet: 'stats:get',
 
@@ -119,6 +124,13 @@ export interface TrackerApi {
     active(): Promise<SessionActive | null>
     start(entryId: number | null): Promise<SessionActive>
     stop(): Promise<void>
+    /** Przełącza sesję na zadanie (to samo → bez zmian/wznowienie; bez zadania → przypina całą grupę). */
+    switch(entryId: number, pausedGroupId?: number): Promise<SessionActive>
+    /** Pauza: zamyka odcinek, zwraca podsumowanie sesji do wznowienia. */
+    pause(): Promise<PausedSession | null>
+    resume(groupId: number): Promise<SessionActive>
+    /** Aktualne podsumowanie wstrzymanej sesji (np. po zmianie tytułu zadania). */
+    group(groupId: number): Promise<PausedSession | null>
   }
   stats: {
     get(period: StatsPeriod): Promise<StatsView>

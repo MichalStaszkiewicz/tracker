@@ -34,7 +34,8 @@ export function getStats(db: DB, period: StatsPeriod, now: Date = new Date()): S
   const windowStart = startOfDay(addDays(now, -(PERIOD_DAYS[period] - 1)))
   const todayKey = dateKey(now)
   let periodMinutes = 0
-  let sessionCount = 0
+  // Sesja = grupa odcinków (pauza/wznowienie dzieli ją na kilka wierszy) — liczymy grupy.
+  const periodGroups = new Set<number>()
   let todayMinutes = 0
 
   for (const s of ended) {
@@ -46,7 +47,7 @@ export function getStats(db: DB, period: StatsPeriod, now: Date = new Date()): S
     if (key === todayKey) todayMinutes += mins
     if (start >= windowStart) {
       periodMinutes += mins
-      sessionCount++
+      periodGroups.add(s.groupId ?? s.id)
       const areaId = s.entryId != null ? entryArea.get(s.entryId) ?? null : null
       areaMin.set(areaId, (areaMin.get(areaId) ?? 0) + mins)
     }
@@ -67,6 +68,7 @@ export function getStats(db: DB, period: StatsPeriod, now: Date = new Date()): S
     heatmap.push({ date: key, minutes: perDay.get(key) ?? 0 })
   }
 
+  const sessionCount = periodGroups.size
   const areaTime: StatsView['areaTime'] = [...areaMin.entries()]
     .map(([areaId, minutes]) => {
       const a = areaId != null ? areaById.get(areaId) : undefined

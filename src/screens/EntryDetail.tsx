@@ -8,6 +8,7 @@ import { useAreas } from '@/hooks/useAreas'
 import { useEntry } from '@/hooks/useEntry'
 import { useTypes } from '@/hooks/useLookups'
 import { useT } from '@/i18n'
+import { useSessionCtx } from '@/session-context'
 import type { StringKey } from '@/i18n/strings'
 import { formatDuration } from '@/lib/format'
 import type { Link } from '@shared/types'
@@ -25,6 +26,7 @@ interface Props {
 
 export function EntryDetail({ id, onClose, onOpen }: Props) {
   const { t } = useT()
+  const session = useSessionCtx()
   const { detail, refetch } = useEntry(id)
   const types = useTypes()
   const { areas } = useAreas()
@@ -46,9 +48,14 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
     await api.entries.update(id, { data: { [key]: value } })
     await refetch()
   }
+  // Widżet sesji pokazuje tytuł i kolor obszaru zadania — po edycji tego zadania odśwież go.
+  const refreshSessionIfMine = () => {
+    if (session.active?.entryId === id || session.paused?.entryId === id) void session.refresh()
+  }
   const commit = async (patch: Parameters<typeof api.entries.update>[1]) => {
     await api.entries.update(id, patch)
     await refetch()
+    refreshSessionIfMine()
   }
   const saveNotes = async (value: string) => {
     await commit({ descriptionMd: value })
@@ -66,6 +73,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
     // Klawiaturowa/klikalna alternatywa dla drag & drop (i jedyny sposób na wyczyszczenie obszaru).
     await api.entries.update(id, { areaId })
     await refetch()
+    refreshSessionIfMine()
   }
   const addTag = async () => {
     const raw = tagInput.trim()
@@ -149,7 +157,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
           value={detail.plannedDate}
           onChange={(v) => void commit({ plannedDate: v })}
         />
-        <button className="btn btn--outline" onClick={() => void api.sessions.start(id)}>
+        <button className="btn btn--outline" onClick={() => void session.start(id)}>
           <Icon name="timer" size={14} />
           {t('detail.session')}
         </button>
@@ -310,7 +318,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
         {tab === 'time' && (
           <div className="detail__col">
             <div className="detail__time">{formatDuration(detail.secondsSpent)}</div>
-            <button className="btn btn--outline" onClick={() => void api.sessions.start(id)}>
+            <button className="btn btn--outline" onClick={() => void session.start(id)}>
               <Icon name="timer" size={14} />
               {t('detail.session')}
             </button>
