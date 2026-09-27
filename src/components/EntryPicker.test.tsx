@@ -39,7 +39,7 @@ afterEach(cleanup)
 const mount = () => {
   const onPick = vi.fn()
   const onClose = vi.fn()
-  render(<EntryPicker onPick={onPick} onClose={onClose} placeholder="Szukaj" emptyText="Brak" />)
+  render(<EntryPicker onPick={onPick} onClose={onClose} label="Przełącz zadanie" placeholder="Szukaj" emptyText="Brak" />)
   return { onPick, onClose, input: screen.getByPlaceholderText('Szukaj') }
 }
 
@@ -59,6 +59,16 @@ describe('EntryPicker', () => {
     fireEvent.keyDown(input, { key: 'ArrowDown' })
     fireEvent.keyDown(input, { key: 'Enter' })
     expect(onPick).toHaveBeenCalledWith(22)
+  })
+
+  it('semantyka combobox: aktywna opcja wskazana przez aria-activedescendant', async () => {
+    const { input } = mount()
+    await screen.findByText('Aktywne A')
+    expect(screen.getByRole('dialog', { name: 'Przełącz zadanie' })).toBeTruthy()
+    expect(input.getAttribute('role')).toBe('combobox')
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    const activeId = input.getAttribute('aria-activedescendant')
+    expect(activeId && document.getElementById(activeId)?.textContent).toContain('Aktywne B')
   })
 
   it('Esc i klik obok zamykają', async () => {

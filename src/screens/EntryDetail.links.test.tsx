@@ -37,7 +37,8 @@ const baseDetail: ED = {
 const addLink = vi.fn(async () => ({ id: 11, entryId: 1, kind: 'url', label: 'x', target: 'https://x' }))
 const detail = vi.fn(async () => baseDetail)
 
-const start = vi.fn(async (entryId: number | null) => ({ id: 1, entryId, startedAt: new Date().toISOString(), entryTitle: 'x', areaColor: null }))
+const start = vi.fn(async (entryId: number | null) => ({ id: 1, entryId, startedAt: new Date().toISOString(), groupId: 1, carriedSeconds: 0, entryTitle: 'x', areaColor: null }))
+const switchFn = vi.fn(async (entryId: number, _paused?: number) => ({ id: 2, entryId, startedAt: new Date().toISOString(), groupId: 2, carriedSeconds: 0, entryTitle: 'x', areaColor: null }))
 vi.mock('@/api', () => ({
   api: {
     entries: {
@@ -53,7 +54,7 @@ vi.mock('@/api', () => ({
     },
     types: { list: vi.fn(async () => []) },
     areas: { list: vi.fn(async () => []) },
-    sessions: { active: vi.fn(async () => null), start: (entryId: number | null) => start(entryId), stop: vi.fn(async () => undefined) },
+    sessions: { active: vi.fn(async () => null), start: (entryId: number | null) => start(entryId), switch: (entryId: number, paused?: number) => switchFn(entryId, paused), stop: vi.fn(async () => undefined) },
     system: { openExternal: vi.fn(), openPath: vi.fn() }
   }
 }))

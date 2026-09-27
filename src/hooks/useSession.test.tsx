@@ -1,21 +1,33 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { SessionActive } from '@shared/types'
+import type { PausedSession, SessionActive } from '@shared/types'
 
-const at = (hms: string) => `2026-09-27T${hms}.000Z`
-const mk = (id: number, entryId: number | null, startedAt: string): SessionActive => ({
+const s = (id: number, entryId: number | null, over: Partial<SessionActive> = {}): SessionActive => ({
   id,
   entryId,
-  startedAt,
+  startedAt: '2026-09-27T10:00:00.000Z',
+  groupId: id,
+  carriedSeconds: 0,
   entryTitle: entryId == null ? null : `Zadanie ${entryId}`,
-  areaColor: null
+  areaColor: null,
+  ...over
+})
+const p = (groupId: number, entryId: number | null, carriedSeconds: number): PausedSession => ({
+  groupId,
+  entryId,
+  entryTitle: entryId == null ? null : `Zadanie ${entryId}`,
+  areaColor: null,
+  carriedSeconds
 })
 
 const active = vi.fn(async (): Promise<SessionActive | null> => null)
-const start = vi.fn(async (entryId: number | null) => mk(10, entryId, at('10:00:00')))
+const start = vi.fn(async (entryId: number | null) => s(10, entryId))
 const stop = vi.fn(async () => undefined)
-const switchFn = vi.fn(async (entryId: number) => mk(11, entryId, at('10:00:00')))
+const pause = vi.fn(async (): Promise<PausedSession | null> => p(5, 42, 120))
+const resume = vi.fn(async (groupId: number) => s(11, 42, { groupId, carriedSeconds: 120 }))
+const switchFn = vi.fn(async (entryId: number, _paused?: number) => s(12, entryId))
+const group = vi.fn(async (groupId: number) => p(groupId, 42, 120))
 
 vi.mock('@/api', () => ({
   api: {
@@ -23,7 +35,10 @@ vi.mock('@/api', () => ({
       active: () => active(),
       start: (id: number | null) => start(id),
       stop: () => stop(),
-      switch: (id: number) => switchFn(id)
+      pause: () => pause(),
+      resume: (g: number) => resume(g),
+      switch: (id: number, paused?: number) => switchFn(id, paused),
+      group: (g: number) => group(g)
     }
   }
 }))
@@ -31,83 +46,89 @@ vi.mock('@/api', () => ({
 const { useSession } = await import('./useSession')
 
 beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(at('10:00:00')))
-  for (const f of [active, start, stop, switchFn]) f.mockClear()
+  for (const f of [active, start, stop, pause, resume, switchFn, group]) f.mockClear()
 })
-afterEach(() => {
-  cleanup()
-  vi.useRealTimers()
-})
+afterEach(cleanup)
 
-/** Hook z trwającą sesją na zadaniu 42, rozpoczętą 2 minuty temu. */
+/** Hook z trwającą sesją (odcinek 5) na zadaniu 42. */
 async function running() {
-  active.mockResolvedValueOnce(mk(5, 42, at('09:58:00')))
+  active.mockResolvedValueOnce(s(5, 42))
   const view = renderHook(() => useSession())
   await waitFor(() => expect(view.result.current.active?.id).toBe(5))
   return view
 }
 
 describe('useSession', () => {
-  it('pauza zamyka odcinek i pamięta zadanie oraz czas; wznowienie liczy dalej na tym samym zadaniu', async () => {
+  it('pauza → stan wstrzymany z bazy; wznowienie tej samej grupy', async () => {
     const { result } = await running()
     await act(() => result.current.pause())
-    expect(stop).toHaveBeenCalledTimes(1)
+    expect(pause).toHaveBeenCalledTimes(1)
     expect(result.current.active).toBeNull()
-    expect(result.current.paused).toMatchObject({ entryId: 42, entryTitle: 'Zadanie 42' })
-    expect(result.current.carried).toBe(120)
-
+    expect(result.current.paused).toMatchObject({ groupId: 5, carriedSeconds: 120 })
     await act(() => result.current.resume())
-    expect(start).toHaveBeenCalledWith(42)
+    expect(resume).toHaveBeenCalledWith(5)
+    expect(result.current.active).toMatchObject({ groupId: 5, carriedSeconds: 120 })
     expect(result.current.paused).toBeNull()
-    expect(result.current.carried).toBe(120) // licznik nie wraca do zera
   })
 
-  it('szybki dwuklik „pauza" nie dolicza odcinka dwa razy', async () => {
+  it('szybki dwuklik „pauza" wysyła jedną operację', async () => {
     const { result } = await running()
     await act(async () => {
       await Promise.all([result.current.pause(), result.current.pause()])
     })
-    expect(stop).toHaveBeenCalledTimes(1)
-    expect(result.current.carried).toBe(120)
+    expect(pause).toHaveBeenCalledTimes(1)
   })
 
-  it('przełączenie na nowy odcinek zeruje licznik; przypięcie tego samego odcinka go zachowuje', async () => {
+  it('⇆ w pauzie przekazuje wstrzymaną grupę (core przypnie/wznowi zamiast zerować)', async () => {
     const { result } = await running()
     await act(() => result.current.pause())
-    await act(() => result.current.resume()) // odcinek id 10, carried 120
-    switchFn.mockResolvedValueOnce(mk(10, 7, at('10:00:00'))) // ten sam odcinek (przypięty)
     await act(() => result.current.switchTo(7))
-    expect(result.current.carried).toBe(120)
-    await act(() => result.current.switchTo(8)) // nowy odcinek (id 11)
-    expect(result.current.active?.entryId).toBe(8)
-    expect(result.current.carried).toBe(0)
+    expect(switchFn).toHaveBeenCalledWith(7, 5)
+    expect(result.current.paused).toBeNull()
+  })
+
+  it('„Sesja" na zadaniu idzie przez switch (to samo zadanie nie zeruje licznika); bez zadania — nowa sesja', async () => {
+    const { result } = await running()
+    await act(() => result.current.start(42))
+    expect(switchFn).toHaveBeenCalledWith(42, undefined)
+    expect(start).not.toHaveBeenCalled()
+    await act(() => result.current.start(null))
+    expect(start).toHaveBeenCalledWith(null)
   })
 
   it('toggle: trwa → stop; wstrzymana → wznów; nic → start bez zadania', async () => {
     const { result } = await running()
     await act(() => result.current.pause())
     await act(() => result.current.toggle())
-    expect(start).toHaveBeenLastCalledWith(42) // wznowienie
+    expect(resume).toHaveBeenCalledWith(5)
     await act(() => result.current.toggle())
-    expect(result.current.active).toBeNull() // stop
+    expect(result.current.active).toBeNull()
     await act(() => result.current.toggle())
     expect(start).toHaveBeenLastCalledWith(null)
   })
 
-  it('stop wstrzymanej sesji tylko chowa widżet (odcinek już zamknięty)', async () => {
+  it('stop wstrzymanej sesji tylko chowa widżet (odcinki już zamknięte)', async () => {
     const { result } = await running()
     await act(() => result.current.pause())
     await act(() => result.current.stop())
-    expect(stop).toHaveBeenCalledTimes(1) // tylko z pauzy
+    expect(stop).not.toHaveBeenCalled()
     expect(result.current.paused).toBeNull()
-    expect(result.current.carried).toBe(0)
   })
 
-  it('błąd api (np. usunięte zadanie) → synchronizacja z bazą zamiast zawieszonego stanu', async () => {
+  it('refresh: aktualny tytuł po edycji zadania (trwająca i wstrzymana)', async () => {
+    const { result } = await running()
+    active.mockResolvedValueOnce(s(5, 42, { entryTitle: 'Nowy tytuł' }))
+    await act(() => result.current.refresh())
+    expect(result.current.active?.entryTitle).toBe('Nowy tytuł')
+    await act(() => result.current.pause())
+    await act(() => result.current.refresh())
+    expect(group).toHaveBeenCalledWith(5)
+  })
+
+  it('błąd api (np. usunięte zadanie) → synchronizacja z bazą', async () => {
     const { result } = await running()
     switchFn.mockRejectedValueOnce(new Error('Wpis 999 nie istnieje'))
-    active.mockResolvedValueOnce(mk(5, 42, at('09:58:00')))
+    active.mockResolvedValueOnce(s(5, 42))
     await act(() => result.current.switchTo(999))
     expect(result.current.active?.id).toBe(5)
   })

@@ -74,10 +74,23 @@ export interface Entry {
 export interface SessionActive {
   id: number
   entryId: number | null
-  startedAt: string // ISO
+  startedAt: string // ISO — start bieżącego odcinka
+  /** Sesja = grupa odcinków (pauza/wznowienie); id grupy = id pierwszego odcinka. */
+  groupId: number
+  /** Sekundy z zamkniętych odcinków tej samej sesji (licznik = to + bieżący odcinek). */
+  carriedSeconds: number
   /** Tytuł zadania i kolor obszaru — widżet sesji działa na każdym ekranie, bez listy zadań. */
   entryTitle: string | null
   areaColor: string | null
+}
+
+/** Wstrzymana sesja: wszystkie odcinki zamknięte, można ją wznowić (ten sam groupId). */
+export interface PausedSession {
+  groupId: number
+  entryId: number | null
+  entryTitle: string | null
+  areaColor: string | null
+  carriedSeconds: number
 }
 
 export interface Link {

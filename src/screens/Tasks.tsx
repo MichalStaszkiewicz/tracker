@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '@/api'
 import { FilterBar } from '@/components/FilterBar'
 import { Icon } from '@/components/Icon'
@@ -9,6 +9,7 @@ import { TaskSection } from '@/components/TaskSection'
 import { useTags, useTypes } from '@/hooks/useLookups'
 import { useTaskReorder } from '@/hooks/useTaskReorder'
 import { useTasks } from '@/hooks/useTasks'
+import { useRefetchOnChange } from '@/hooks/useRefetchOnChange'
 import { useToday } from '@/hooks/useToday'
 import { useT } from '@/i18n'
 import { weekdayDate } from '@/lib/dates'
@@ -44,14 +45,9 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
   const groupBy: GroupBy = settings.tasksGroupBy
   const setGroupBy = (g: GroupBy) => set('tasksGroupBy', g)
 
-  // Znacznik trwającej sesji na kartach pochodzi z listy — odśwież ją, gdy sesja się zmieni.
-  const sessionKey = session.active?.id ?? null
-  const sessionOfFetch = useRef(sessionKey)
-  useEffect(() => {
-    if (sessionOfFetch.current === sessionKey) return
-    sessionOfFetch.current = sessionKey
-    void refetch()
-  }, [sessionKey, refetch])
+  // Znacznik trwającej sesji na kartach pochodzi z listy — odśwież ją, gdy sesja się zmieni
+  // (także gdy ⇆ przypina zadanie do tego samego odcinka: id się nie zmienia, zadanie tak).
+  useRefetchOnChange(session.active ? `${session.active.id}:${session.active.entryId ?? ''}` : null, refetch)
 
   const filtered = useMemo(
     () => filterTasks(tasks, { areaId: areaFilter?.id, typeKey, tagId, query }),
@@ -72,7 +68,11 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
     dayOfFetch.current = today
     void refetch()
   }, [today, refetch])
-  const reorder = useTaskReorder({ groups, onMoved: refetch })
+  const onMoved = useCallback(async () => {
+    await refetch()
+    void session.refresh() // przeniesienie mogło zmienić obszar zadania z sesji (kolor w widżecie)
+  }, [refetch, session])
+  const reorder = useTaskReorder({ groups, onMoved })
   const activeCount = filtered.filter((it) => taskStatus(it) !== 'done').length
 
   const sectionLabel = (g: TaskGroup): string | undefined => {

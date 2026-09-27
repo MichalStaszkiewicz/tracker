@@ -48,9 +48,14 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
     await api.entries.update(id, { data: { [key]: value } })
     await refetch()
   }
+  // Widżet sesji pokazuje tytuł i kolor obszaru zadania — po edycji tego zadania odśwież go.
+  const refreshSessionIfMine = () => {
+    if (session.active?.entryId === id || session.paused?.entryId === id) void session.refresh()
+  }
   const commit = async (patch: Parameters<typeof api.entries.update>[1]) => {
     await api.entries.update(id, patch)
     await refetch()
+    refreshSessionIfMine()
   }
   const saveNotes = async (value: string) => {
     await commit({ descriptionMd: value })
@@ -68,6 +73,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
     // Klawiaturowa/klikalna alternatywa dla drag & drop (i jedyny sposób na wyczyszczenie obszaru).
     await api.entries.update(id, { areaId })
     await refetch()
+    refreshSessionIfMine()
   }
   const addTag = async () => {
     const raw = tagInput.trim()

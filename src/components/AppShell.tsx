@@ -12,6 +12,8 @@ interface Props {
   onAddArea: () => void
   onAreaDrop?: (area: Area, taskId: number) => void
   onOpenPalette: () => void
+  /** Widoczny dok sesji — ekrany rezerwują pod nim miejsce (nic nie znika pod widżetem). */
+  dock?: boolean
   children: ReactNode
 }
 
@@ -24,6 +26,7 @@ export function AppShell({
   onAddArea,
   onAreaDrop,
   onOpenPalette,
+  dock,
   children
 }: Props) {
   return (
@@ -39,7 +42,7 @@ export function AppShell({
           onAddArea={onAddArea}
           onAreaDrop={onAreaDrop}
         />
-        <main style={{ position: 'relative', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <main className={dock ? 'main--dock' : undefined} style={{ position: 'relative', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           {children}
         </main>
       </div>

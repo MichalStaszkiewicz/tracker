@@ -350,6 +350,16 @@ button { font-family: var(--font-body); }
 /* --- Session widget --- */
 /* Dok sesji: zawsze w prawym dolnym rogu obszaru treści, nad każdym ekranem. */
 .sessiondock { position: absolute; right: 22px; bottom: 22px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+/* Gdy dok jest widoczny, ekrany rezerwują pod nim miejsce — ostatnie wiersze i przyciski da się
+   przewinąć nad widżet, a pole szybkiego dodawania kończy się przed dokiem, zamiast pod nim znikać. */
+.main--dock { --dock-space: 196px; }
+.main--dock .list { padding-bottom: 132px; }
+.main--dock .quickadd { margin-right: 244px; }
+.main--dock .otable,
+.main--dock .screen.detail,
+.main--dock .screen.stats,
+.main--dock .screen.profile,
+.main--dock .settings__panel { padding-bottom: var(--dock-space); }
 .session { width: 236px; border-radius: 12px; background: var(--color-surface); box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-accent-800); overflow: hidden; }
 .session--paused { box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-neutral-800); }
 .session--paused .session__time { color: var(--color-neutral-500); }

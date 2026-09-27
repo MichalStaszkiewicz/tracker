@@ -32,6 +32,7 @@ export function App() {
   const { areas, reload: reloadAreas } = useAreas()
   const { shortcuts } = useSettingsCtx()
   const session = useSessionCtx()
+  const sessionVisible = session.active != null || session.paused != null
 
   const createArea = async (name: string, color: string) => {
     await api.areas.create(name, color)
@@ -53,6 +54,7 @@ export function App() {
     try {
       await api.entries.update(taskId, { areaId: area.id })
       setTaskRefresh((n) => n + 1)
+      void session.refresh() // kolor obszaru w widżecie sesji
     } catch {
       // Nieudany zapis (np. wyścig) — nie zostawiamy połowicznie zmienionego UI.
     }
@@ -130,17 +132,19 @@ export function App() {
         onAddArea={() => setAddAreaOpen(true)}
         onAreaDrop={dropTaskToArea}
         onOpenPalette={() => setPaletteOpen(true)}
+        dock={sessionVisible}
       >
         {content}
-        <SessionWidget
-          active={session.active}
-          paused={session.paused}
-          carried={session.carried}
-          onStop={() => void session.stop()}
-          onPause={() => void session.pause()}
-          onResume={() => void session.resume()}
-          onSwitch={(id) => void session.switchTo(id)}
-        />
+        {sessionVisible && (
+          <SessionWidget
+            active={session.active}
+            paused={session.paused}
+            onStop={() => void session.stop()}
+            onPause={() => void session.pause()}
+            onResume={() => void session.resume()}
+            onSwitch={(id) => void session.switchTo(id)}
+          />
+        )}
       </AppShell>
       {paletteOpen && (
         <CommandPalette

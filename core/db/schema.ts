@@ -105,7 +105,9 @@ export const sessions = sqliteTable('sessions', {
   entryId: integer('entry_id'),
   startedAt: text('started_at').notNull(),
   endedAt: text('ended_at'),
-  note: text('note')
+  note: text('note'),
+  /** Odcinki jednej sesji (pauza/wznowienie) wskazują id pierwszego odcinka; null = sam jest grupą. */
+  groupId: integer('group_id')
 })
 
 export const links = sqliteTable('links', {

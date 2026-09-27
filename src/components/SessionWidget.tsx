@@ -1,39 +1,48 @@
-import { useState } from 'react'
-import type { PausedSession } from '@/hooks/useSession'
+import { useRef, useState } from 'react'
 import { useStopwatch } from '@/hooks/useStopwatch'
 import { useT } from '@/i18n'
 import { formatStopwatch } from '@/lib/format'
-import type { SessionActive } from '@shared/types'
+import type { PausedSession, SessionActive } from '@shared/types'
 import { EntryPicker } from './EntryPicker'
 import { Icon } from './Icon'
 
 interface Props {
   active: SessionActive | null
   paused: PausedSession | null
-  carried: number
   onStop: () => void
   onPause: () => void
   onResume: () => void
   onSwitch: (entryId: number) => void
 }
 
-/** Widżet sesji — widoczny na każdym ekranie, dopóki sesja trwa albo jest wstrzymana. */
-export function SessionWidget({ active, paused, carried, onStop, onPause, onResume, onSwitch }: Props) {
+/**
+ * Widżet sesji — App renderuje go tylko, gdy sesja trwa albo jest wstrzymana (dzięki temu
+ * stan wyszukiwarki ⇆ nie przeżywa zakończenia sesji). Licznik tyka tylko tutaj.
+ */
+export function SessionWidget({ active, paused, onStop, onPause, onResume, onSwitch }: Props) {
   const { t } = useT()
   const [picking, setPicking] = useState(false)
-  const elapsed = useStopwatch(active?.startedAt ?? null, carried)
+  const switchRef = useRef<HTMLButtonElement>(null)
+  const elapsed = useStopwatch(active?.startedAt ?? null, active?.carriedSeconds ?? paused?.carriedSeconds ?? 0)
   const current = active ?? paused
   if (!current) return null
+
+  const closePicker = () => {
+    setPicking(false)
+    switchRef.current?.focus() // fokus wraca tam, skąd otwarto (klawiatura/czytnik ekranu)
+  }
 
   return (
     <div className="sessiondock">
       {picking && (
         <EntryPicker
+          label={t('session.switch')}
           placeholder={t('session.switchPlaceholder')}
           emptyText={t('session.switchEmpty')}
-          onClose={() => setPicking(false)}
+          ignoreRef={switchRef}
+          onClose={closePicker}
           onPick={(id) => {
-            setPicking(false)
+            closePicker()
             onSwitch(id)
           }}
         />
@@ -65,13 +74,13 @@ export function SessionWidget({ active, paused, carried, onStop, onPause, onResu
               </button>
             )}
             <button
+              ref={switchRef}
               className={`iconbtn${picking ? ' iconbtn--active' : ''}`}
               aria-label={t('session.switch')}
               title={t('session.switch')}
               aria-expanded={picking}
-              // Bez tego „klik obok" z wyszukiwarki zamknąłby ją, a klik zaraz otworzył ponownie.
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={() => setPicking((p) => !p)}
+              aria-haspopup="dialog"
+              onClick={() => setPicking((open) => !open)}
             >
               <Icon name="arrows-left-right" size={12} />
             </button>

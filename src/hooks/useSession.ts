@@ -1,40 +1,33 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '@/api'
-import { secondsSince } from '@/lib/format'
-import type { SessionActive } from '@shared/types'
-
-/** Wstrzymana sesja: odcinek zamknięty w bazie, widżet pamięta zadanie do wznowienia. */
-export interface PausedSession {
-  entryId: number | null
-  entryTitle: string | null
-  areaColor: string | null
-}
+import type { PausedSession, SessionActive } from '@shared/types'
 
 export interface SessionApi {
   active: SessionActive | null
   paused: PausedSession | null
-  /** Sekundy z odcinków sprzed pauzy (licznik = carried + bieżący odcinek). */
-  carried: number
+  /** Nowa sesja bez zadania — albo, z zadaniem, jak ⇆ (to samo → bez zmian / wznowienie). */
   start: (entryId: number | null) => Promise<void>
-  /** Kończy sesję (także wstrzymaną — wtedy tylko chowa widżet). */
+  /** Kończy sesję (także wstrzymaną — wtedy tylko chowa widżet, odcinki są już zamknięte). */
   stop: () => Promise<void>
   pause: () => Promise<void>
   resume: () => Promise<void>
-  /** Przełącza na inne zadanie (bez zadania: przypina bieżący odcinek). */
+  /** Przełącza na zadanie; sesja bez zadania (także wstrzymana) zostaje do niego przypięta w całości. */
   switchTo: (entryId: number) => Promise<void>
   /** Skrót: trwa → stop, wstrzymana → wznów, nic → start bez zadania. */
   toggle: () => Promise<void>
+  /** Po edycji zadania (tytuł, obszar) — odśwież to, co pokazuje widżet. */
+  refresh: () => Promise<void>
 }
 
 /**
- * Jedno źródło prawdy o sesji dla całej aplikacji (SessionProvider). Nie tyka co sekundę —
- * licznik liczy widżet — więc konsumenci przerysowują się tylko przy realnej zmianie stanu.
+ * Jedno źródło prawdy o sesji dla całej aplikacji (SessionProvider). Czas i grupy odcinków
+ * liczy core, więc hook tylko przechowuje ostatni stan z bazy. Nie tyka co sekundę — licznik
+ * liczy widżet — więc konsumenci przerysowują się tylko przy realnej zmianie.
  */
 export function useSession(): SessionApi {
   const [active, setActive] = useState<SessionActive | null>(null)
   const [paused, setPaused] = useState<PausedSession | null>(null)
-  const [carried, setCarried] = useState(0)
-  const busy = useRef(false) // podwójny klik „pauza" nie może dodać odcinka dwa razy
+  const busy = useRef(false) // podwójny klik nie może wysłać operacji dwa razy
 
   useEffect(() => {
     void api.sessions.active().then(setActive)
@@ -52,15 +45,20 @@ export function useSession(): SessionApi {
     }
   }, [])
 
+  const running = (s: SessionActive) => {
+    setActive(s)
+    setPaused(null)
+  }
+
+  const switchTo = useCallback(
+    (entryId: number) => run(async () => running(await api.sessions.switch(entryId, paused?.groupId))),
+    [run, paused]
+  )
+
   const start = useCallback(
     (entryId: number | null) =>
-      run(async () => {
-        const s = await api.sessions.start(entryId)
-        setActive(s)
-        setPaused(null)
-        setCarried(0)
-      }),
-    [run]
+      entryId != null ? switchTo(entryId) : run(async () => running(await api.sessions.start(null))),
+    [run, switchTo]
   )
 
   const stop = useCallback(
@@ -69,7 +67,6 @@ export function useSession(): SessionApi {
         if (active) await api.sessions.stop()
         setActive(null)
         setPaused(null)
-        setCarried(0)
       }),
     [run, active]
   )
@@ -78,10 +75,7 @@ export function useSession(): SessionApi {
     () =>
       run(async () => {
         if (!active) return
-        const segment = secondsSince(active.startedAt)
-        await api.sessions.stop()
-        setCarried((c) => c + segment)
-        setPaused({ entryId: active.entryId, entryTitle: active.entryTitle, areaColor: active.areaColor })
+        setPaused(await api.sessions.pause())
         setActive(null)
       }),
     [run, active]
@@ -91,23 +85,9 @@ export function useSession(): SessionApi {
     () =>
       run(async () => {
         if (!paused) return
-        setActive(await api.sessions.start(paused.entryId))
-        setPaused(null)
+        running(await api.sessions.resume(paused.groupId))
       }),
     [run, paused]
-  )
-
-  const switchTo = useCallback(
-    (entryId: number) =>
-      run(async () => {
-        const previousId = active?.id ?? null
-        const s = await api.sessions.switch(entryId)
-        // Ten sam odcinek (przypięty do zadania) liczy dalej; nowy odcinek = nowe zadanie → od zera.
-        if (s.id !== previousId) setCarried(0)
-        setActive(s)
-        setPaused(null)
-      }),
-    [run, active]
   )
 
   const toggle = useCallback(async () => {
@@ -116,8 +96,13 @@ export function useSession(): SessionApi {
     else await start(null)
   }, [active, paused, stop, resume, start])
 
+  const refresh = useCallback(async () => {
+    if (active) setActive(await api.sessions.active())
+    else if (paused) setPaused(await api.sessions.group(paused.groupId))
+  }, [active, paused])
+
   return useMemo(
-    () => ({ active, paused, carried, start, stop, pause, resume, switchTo, toggle }),
-    [active, paused, carried, start, stop, pause, resume, switchTo, toggle]
+    () => ({ active, paused, start, stop, pause, resume, switchTo, toggle, refresh }),
+    [active, paused, start, stop, pause, resume, switchTo, toggle, refresh]
   )
 }

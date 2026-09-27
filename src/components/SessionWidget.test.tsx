@@ -37,6 +37,8 @@ const running: SessionActive = {
   id: 1,
   entryId: 3,
   startedAt: new Date().toISOString(),
+  groupId: 1,
+  carriedSeconds: 0,
   entryTitle: 'Poczytać sieci',
   areaColor: null
 }
@@ -45,7 +47,7 @@ function mount(props: Partial<Parameters<typeof SessionWidget>[0]> = {}) {
   const handlers = { onStop: vi.fn(), onPause: vi.fn(), onResume: vi.fn(), onSwitch: vi.fn() }
   const view = render(
     <I18nProvider>
-      <SessionWidget active={running} paused={null} carried={0} {...handlers} {...props} />
+      <SessionWidget active={running} paused={null} {...handlers} {...props} />
     </I18nProvider>
   )
   return { ...view, ...handlers }
@@ -69,8 +71,7 @@ describe('SessionWidget', () => {
   it('wstrzymana: etykieta „wstrzymana", przycisk Wznów, licznik stoi na zapamiętanym czasie', () => {
     const { onResume } = mount({
       active: null,
-      paused: { entryId: 3, entryTitle: 'Poczytać sieci', areaColor: null },
-      carried: 125
+      paused: { groupId: 1, entryId: 3, entryTitle: 'Poczytać sieci', areaColor: null, carriedSeconds: 125 }
     })
     expect(screen.getByText(/wstrzymana/)).toBeTruthy()
     expect(screen.getByText('02:05')).toBeTruthy()
@@ -85,9 +86,7 @@ describe('SessionWidget', () => {
 
   it('regresja: ⇆ otwiera wybór zadania, a wybór przełącza sesję', async () => {
     const { onSwitch } = mount()
-    const toggle = screen.getByRole('button', { name: 'Przełącz zadanie' })
-    fireEvent.mouseDown(toggle)
-    fireEvent.click(toggle)
+    fireEvent.click(screen.getByRole('button', { name: 'Przełącz zadanie' }))
     fireEvent.click(await screen.findByText('Parser PE'))
     expect(onSwitch).toHaveBeenCalledWith(4)
     await waitFor(() => expect(screen.queryByPlaceholderText('Przełącz na zadanie…')).toBeNull())
@@ -102,5 +101,31 @@ describe('SessionWidget', () => {
     fireEvent.mouseDown(toggle)
     fireEvent.click(toggle)
     expect(screen.queryByPlaceholderText('Przełącz na zadanie…')).toBeNull()
+  })
+})
+
+describe('SessionWidget — regresje z przeglądu', () => {
+  it('klik ⇆ nie blokuje zamykania innych menu (mousedown dociera do dokumentu)', () => {
+    mount()
+    const onDoc = vi.fn()
+    document.addEventListener('mousedown', onDoc)
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Przełącz zadanie' }))
+    document.removeEventListener('mousedown', onDoc)
+    expect(onDoc).toHaveBeenCalled()
+  })
+
+  it('Esc w wyszukiwarce zamyka ją i oddaje fokus przyciskowi ⇆', async () => {
+    mount()
+    const toggle = screen.getByRole('button', { name: 'Przełącz zadanie' })
+    fireEvent.click(toggle)
+    const input = await screen.findByPlaceholderText('Przełącz na zadanie…')
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(screen.queryByPlaceholderText('Przełącz na zadanie…')).toBeNull()
+    expect(document.activeElement).toBe(toggle)
+  })
+
+  it('licznik po wznowieniu = czas sprzed pauzy (z core) + bieżący odcinek', () => {
+    mount({ active: { ...running, startedAt: new Date(Date.now() - 5000).toISOString(), carriedSeconds: 600 } })
+    expect(screen.getByText(/^10:0[45]$/)).toBeTruthy()
   })
 })
