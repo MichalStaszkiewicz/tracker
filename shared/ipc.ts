@@ -57,6 +57,7 @@ export const IPC = {
   sessionActive: 'session:active',
   sessionStart: 'session:start',
   sessionStop: 'session:stop',
+  sessionSwitch: 'session:switch',
 
   statsGet: 'stats:get',
 
@@ -119,6 +120,8 @@ export interface TrackerApi {
     active(): Promise<SessionActive | null>
     start(entryId: number | null): Promise<SessionActive>
     stop(): Promise<void>
+    /** Przełącza trwającą sesję na inne zadanie (bez zadania: przypina bieżący odcinek). */
+    switch(entryId: number): Promise<SessionActive>
   }
   stats: {
     get(period: StatsPeriod): Promise<StatsView>

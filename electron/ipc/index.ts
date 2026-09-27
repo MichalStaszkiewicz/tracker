@@ -29,7 +29,7 @@ import {
   toggleDone,
   updateEntry
 } from '@core/repositories/entries'
-import { activeSession, startSession, stopSession } from '@core/repositories/sessions'
+import { activeSession, startSession, stopSession, switchSession } from '@core/repositories/sessions'
 import { getStats } from '@core/repositories/stats'
 import { commitImport, listOffers, previewImport } from '@core/repositories/offers'
 import { fetchJustJoinOffers } from '@core/scraper/justjoin'
@@ -81,6 +81,7 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.sessionActive, () => activeSession(getDb()))
   ipcMain.handle(IPC.sessionStart, (_e, entryId: number | null) => startSession(getDb(), entryId))
   ipcMain.handle(IPC.sessionStop, () => stopSession(getDb()))
+  ipcMain.handle(IPC.sessionSwitch, (_e, entryId: number) => switchSession(getDb(), entryId))
 
   ipcMain.handle(IPC.statsGet, (_e, period: StatsPeriod) => getStats(getDb(), period))
 
