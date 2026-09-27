@@ -75,6 +75,9 @@ export interface SessionActive {
   id: number
   entryId: number | null
   startedAt: string // ISO
+  /** Tytuł zadania i kolor obszaru — widżet sesji działa na każdym ekranie, bez listy zadań. */
+  entryTitle: string | null
+  areaColor: string | null
 }
 
 export interface Link {
