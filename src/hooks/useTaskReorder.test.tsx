@@ -228,6 +228,30 @@ describe('useTaskReorder', () => {
     await waitFor(() => expect(scroll).toHaveBeenCalledWith({ block: 'nearest' }))
   })
 
+  it('regresja: przeciągnięcie ponad listę przewija ją w górę, a po puszczeniu przestaje', async () => {
+    const { container } = mount([{ key: 'todo', label: null, items: [make(1), make(2)] }])
+    const list = container.querySelector<HTMLElement>('.list')
+    if (!list) throw new Error('brak listy')
+    list.getBoundingClientRect = () => ({ top: 100, bottom: 600, left: 0, right: 800, width: 800, height: 500, x: 0, y: 100, toJSON: () => ({}) })
+    let top = 500
+    Object.defineProperty(list, 'scrollTop', {
+      configurable: true,
+      get: () => top,
+      set: (v: number) => {
+        top = v
+      }
+    })
+    const dt = makeDataTransfer()
+    fireEvent.dragStart(card(1), { dataTransfer: dt })
+    // kursor nad listą (np. nad paskiem filtrów) — lista sama zdarzeń nie dostaje
+    document.body.dispatchEvent(new window.DragEvent('dragover', { bubbles: true, clientX: 400, clientY: 20 }))
+    await waitFor(() => expect(top).toBeLessThan(500))
+    fireEvent.dragEnd(card(1), { dataTransfer: dt })
+    const stopped = top
+    await new Promise((r) => setTimeout(r, 80))
+    expect(top).toBe(stopped)
+  })
+
   it('Alt+↑ na pierwszej karcie sekcji nic nie robi', async () => {
     mount([{ key: 'todo', label: null, items: [make(1), make(2)] }])
     fireEvent.keyDown(card(1), { key: 'ArrowUp', altKey: true })

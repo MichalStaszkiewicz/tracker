@@ -1,7 +1,8 @@
-import { useRef, useState, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { api } from '@/api'
 import {
   TASK_DND_TYPE,
+  autoScrollStep,
   canDrop,
   keyboardTarget,
   placementFromPointer,
@@ -63,6 +64,32 @@ export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMov
   const [over, setOver] = useState<Over | null>(null)
   const dragRef = useRef<Drag | null>(null)
   const overRef = useRef<Over | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+
+  // Auto-przewijanie: kursor przy krawędzi listy (albo nad/pod nią — tam lista nie dostaje
+  // zdarzeń) przewija ją płynnie. dragover łapiemy na dokumencie w fazie capture, bo karty
+  // zatrzymują propagację; przewijamy w pętli rAF, żeby działało też przy nieruchomym kursorze.
+  const dragging = drag != null
+  useEffect(() => {
+    if (!dragging) return
+    let pointer: { x: number; y: number } | null = null
+    const track = (e: globalThis.DragEvent) => {
+      pointer = { x: e.clientX, y: e.clientY }
+    }
+    let frame = requestAnimationFrame(function tick() {
+      const el = listRef.current
+      if (el && pointer) {
+        const step = autoScrollStep(el.getBoundingClientRect(), pointer.x, pointer.y)
+        if (step !== 0) el.scrollTop += step
+      }
+      frame = requestAnimationFrame(tick)
+    })
+    document.addEventListener('dragover', track, true)
+    return () => {
+      document.removeEventListener('dragover', track, true)
+      cancelAnimationFrame(frame)
+    }
+  }, [dragging])
 
   const updateOver = (next: Over | null): void => {
     if (sameOver(overRef.current, next)) return
@@ -175,6 +202,7 @@ export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMov
    * (np. na sidebar) czyści wskaźnik.
    */
   const listProps = {
+    ref: listRef,
     onDragOver: (e: DragEvent<HTMLElement>) => {
       if (!ours(e)) return
       if (overRef.current?.target) accept(e)
@@ -191,5 +219,5 @@ export function useTaskReorder({ groups, onMoved }: { groups: TaskGroup[]; onMov
     }
   }
 
-  return { bindCard, bindSection, listProps, dragging: drag != null }
+  return { bindCard, bindSection, listProps, dragging }
 }
