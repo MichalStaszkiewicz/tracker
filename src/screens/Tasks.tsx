@@ -4,11 +4,8 @@ import { FilterBar } from '@/components/FilterBar'
 import { Icon } from '@/components/Icon'
 import { QuickAdd } from '@/components/QuickAdd'
 import { ScreenHeader } from '@/components/ScreenHeader'
-import { SessionWidget } from '@/components/SessionWidget'
 import { TaskCard } from '@/components/TaskCard'
 import { TaskSection } from '@/components/TaskSection'
-import { useActiveSession } from '@/hooks/useActiveSession'
-import { useHotkeys } from '@/hooks/useHotkeys'
 import { useTags, useTypes } from '@/hooks/useLookups'
 import { useTaskReorder } from '@/hooks/useTaskReorder'
 import { useTasks } from '@/hooks/useTasks'
@@ -17,6 +14,7 @@ import { useT } from '@/i18n'
 import { weekdayDate } from '@/lib/dates'
 import { filterTasks, groupTasks, type GroupBy, type TaskGroup } from '@/lib/task-view'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
+import { useSessionCtx } from '@/session-context'
 import { useSettingsCtx } from '@/settings-context'
 import { fromDateKey, toDateKey } from '@shared/dates'
 import { taskStatus } from '@shared/task-status'
@@ -40,13 +38,20 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
   const { tasks, refetch } = useTasks(filter, refreshToken)
   const types = useTypes()
   const { tags, reload: reloadTags } = useTags()
-  const session = useActiveSession()
-  const { shortcuts, settings, set } = useSettingsCtx()
+  const session = useSessionCtx()
+  const { settings, set } = useSettingsCtx()
   // Grupowanie zapamiętane w ustawieniach (domyślnie po dacie).
   const groupBy: GroupBy = settings.tasksGroupBy
   const setGroupBy = (g: GroupBy) => set('tasksGroupBy', g)
 
-  useHotkeys({ [shortcuts.session]: () => void session.toggle() })
+  // Znacznik trwającej sesji na kartach pochodzi z listy — odśwież ją, gdy sesja się zmieni.
+  const sessionKey = session.active?.id ?? null
+  const sessionOfFetch = useRef(sessionKey)
+  useEffect(() => {
+    if (sessionOfFetch.current === sessionKey) return
+    sessionOfFetch.current = sessionKey
+    void refetch()
+  }, [sessionKey, refetch])
 
   const filtered = useMemo(
     () => filterTasks(tasks, { areaId: areaFilter?.id, typeKey, tagId, query }),
@@ -106,8 +111,6 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
     })
     await Promise.all([refetch(), reloadTags()])
   }
-
-  const activeTask = tasks.find((it) => it.id === session.active?.entryId) ?? null
 
   return (
     <div className="screen">
@@ -175,14 +178,6 @@ export function Tasks({ areaFilter, onClearArea, onOpenEntry, refreshToken }: Pr
       </div>
 
       <QuickAdd onSubmit={add} />
-
-      <SessionWidget
-        active={session.active}
-        elapsed={session.elapsed}
-        entryTitle={activeTask?.title ?? null}
-        areaColor={activeTask?.area?.color ?? null}
-        onStop={session.stop}
-      />
     </div>
   )
 }

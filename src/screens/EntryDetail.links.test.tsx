@@ -2,6 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from '@/i18n'
+import { SessionProvider } from '@/session-context'
 import type { EntryDetail as ED } from '@shared/types'
 
 const baseDetail: ED = {
@@ -36,6 +37,7 @@ const baseDetail: ED = {
 const addLink = vi.fn(async () => ({ id: 11, entryId: 1, kind: 'url', label: 'x', target: 'https://x' }))
 const detail = vi.fn(async () => baseDetail)
 
+const start = vi.fn(async (entryId: number | null) => ({ id: 1, entryId, startedAt: new Date().toISOString(), entryTitle: 'x', areaColor: null }))
 vi.mock('@/api', () => ({
   api: {
     entries: {
@@ -51,7 +53,7 @@ vi.mock('@/api', () => ({
     },
     types: { list: vi.fn(async () => []) },
     areas: { list: vi.fn(async () => []) },
-    sessions: { start: vi.fn(async () => undefined) },
+    sessions: { active: vi.fn(async () => null), start: (entryId: number | null) => start(entryId), stop: vi.fn(async () => undefined) },
     system: { openExternal: vi.fn(), openPath: vi.fn() }
   }
 }))
@@ -61,7 +63,9 @@ const { EntryDetail } = await import('./EntryDetail')
 const renderDetail = () =>
   render(
     <I18nProvider>
-      <EntryDetail id={1} onClose={() => {}} onOpen={() => {}} />
+      <SessionProvider>
+        <EntryDetail id={1} onClose={() => {}} onOpen={() => {}} />
+      </SessionProvider>
     </I18nProvider>
   )
 

@@ -3,10 +3,12 @@ import { api } from '@/api'
 import { AppShell } from '@/components/AppShell'
 import { AreaPopover } from '@/components/AreaPopover'
 import { CommandPalette, type PaletteAction } from '@/components/CommandPalette'
+import { SessionWidget } from '@/components/SessionWidget'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
 import { useHotkeys } from '@/hooks/useHotkeys'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
+import { useSessionCtx } from '@/session-context'
 import { useSettingsCtx } from '@/settings-context'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
@@ -29,6 +31,7 @@ export function App() {
   const [taskRefresh, setTaskRefresh] = useState(0)
   const { areas, reload: reloadAreas } = useAreas()
   const { shortcuts } = useSettingsCtx()
+  const session = useSessionCtx()
 
   const createArea = async (name: string, color: string) => {
     await api.areas.create(name, color)
@@ -67,6 +70,7 @@ export function App() {
     [shortcuts['screen.stats']]: () => navigate('stats'),
     [shortcuts.quickAdd]: focusAdd,
     [shortcuts.addArea]: () => setAddAreaOpen(true),
+    [shortcuts.session]: () => void session.toggle(), // sesja działa z każdego ekranu
     'ctrl+arrowup': focusAdd
   })
 
@@ -91,8 +95,8 @@ export function App() {
     })),
     { id: 'add', icon: 'plus', label: t('pal.addTask'), run: focusAdd },
     { id: 'addArea', icon: 'plus', label: t('pal.addArea'), run: () => setAddAreaOpen(true) },
-    { id: 'session.start', icon: 'timer', label: t('pal.startSession'), run: () => void api.sessions.start(null) },
-    { id: 'session.stop', icon: 'pause', label: t('pal.stopSession'), run: () => void api.sessions.stop() }
+    { id: 'session.start', icon: 'timer', label: t('pal.startSession'), run: () => void session.start(null) },
+    { id: 'session.stop', icon: 'pause', label: t('pal.stopSession'), run: () => void session.stop() }
   ]
 
   const content =
@@ -128,6 +132,15 @@ export function App() {
         onOpenPalette={() => setPaletteOpen(true)}
       >
         {content}
+        <SessionWidget
+          active={session.active}
+          paused={session.paused}
+          carried={session.carried}
+          onStop={() => void session.stop()}
+          onPause={() => void session.pause()}
+          onResume={() => void session.resume()}
+          onSwitch={(id) => void session.switchTo(id)}
+        />
       </AppShell>
       {paletteOpen && (
         <CommandPalette

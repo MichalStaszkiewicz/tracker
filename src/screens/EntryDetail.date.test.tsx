@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from '@/i18n'
+import { SessionProvider } from '@/session-context'
 import { addDaysKey, toDateKey } from '@shared/dates'
 import type { EntryDetail as ED } from '@shared/types'
 
@@ -35,6 +36,7 @@ const detail: ED = {
 }
 
 const update = vi.fn(async () => detail)
+const start = vi.fn(async (entryId: number | null) => ({ id: 1, entryId, startedAt: new Date().toISOString(), entryTitle: 'x', areaColor: null }))
 vi.mock('@/api', () => ({
   api: {
     entries: {
@@ -43,7 +45,7 @@ vi.mock('@/api', () => ({
     },
     types: { list: vi.fn(async () => []) },
     areas: { list: vi.fn(async () => []) },
-    sessions: { start: vi.fn(async () => undefined) },
+    sessions: { active: vi.fn(async () => null), start: (entryId: number | null) => start(entryId), stop: vi.fn(async () => undefined) },
     system: { openExternal: vi.fn(), openPath: vi.fn() }
   }
 }))
@@ -56,7 +58,9 @@ describe('EntryDetail — data zadania', () => {
   it('wybór „Jutro" w nagłówku zapisuje plannedDate przez api.entries.update', async () => {
     render(
       <I18nProvider>
-        <EntryDetail id={7} onClose={() => {}} onOpen={() => {}} />
+        <SessionProvider>
+          <EntryDetail id={7} onClose={() => {}} onOpen={() => {}} />
+        </SessionProvider>
       </I18nProvider>
     )
     await screen.findByDisplayValue('Process Explorer w c++')
@@ -64,5 +68,20 @@ describe('EntryDetail — data zadania', () => {
     fireEvent.click(screen.getByText('Jutro'))
     const tomorrow = addDaysKey(toDateKey(new Date()), 1)
     await waitFor(() => expect(update).toHaveBeenCalledWith(7, { plannedDate: tomorrow }))
+  })
+})
+
+describe('EntryDetail — sesja', () => {
+  it('przycisk „Sesja" startuje sesję przez wspólny stan (widżet widoczny na każdym ekranie)', async () => {
+    render(
+      <I18nProvider>
+        <SessionProvider>
+          <EntryDetail id={7} onClose={() => {}} onOpen={() => {}} />
+        </SessionProvider>
+      </I18nProvider>
+    )
+    await screen.findByDisplayValue('Process Explorer w c++')
+    fireEvent.click(screen.getAllByRole('button', { name: /Sesja/ })[0])
+    await waitFor(() => expect(start).toHaveBeenCalledWith(7))
   })
 })

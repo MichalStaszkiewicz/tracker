@@ -8,6 +8,7 @@ import { useAreas } from '@/hooks/useAreas'
 import { useEntry } from '@/hooks/useEntry'
 import { useTypes } from '@/hooks/useLookups'
 import { useT } from '@/i18n'
+import { useSessionCtx } from '@/session-context'
 import type { StringKey } from '@/i18n/strings'
 import { formatDuration } from '@/lib/format'
 import type { Link } from '@shared/types'
@@ -25,6 +26,7 @@ interface Props {
 
 export function EntryDetail({ id, onClose, onOpen }: Props) {
   const { t } = useT()
+  const session = useSessionCtx()
   const { detail, refetch } = useEntry(id)
   const types = useTypes()
   const { areas } = useAreas()
@@ -149,7 +151,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
           value={detail.plannedDate}
           onChange={(v) => void commit({ plannedDate: v })}
         />
-        <button className="btn btn--outline" onClick={() => void api.sessions.start(id)}>
+        <button className="btn btn--outline" onClick={() => void session.start(id)}>
           <Icon name="timer" size={14} />
           {t('detail.session')}
         </button>
@@ -310,7 +312,7 @@ export function EntryDetail({ id, onClose, onOpen }: Props) {
         {tab === 'time' && (
           <div className="detail__col">
             <div className="detail__time">{formatDuration(detail.secondsSpent)}</div>
-            <button className="btn btn--outline" onClick={() => void api.sessions.start(id)}>
+            <button className="btn btn--outline" onClick={() => void session.start(id)}>
               <Icon name="timer" size={14} />
               {t('detail.session')}
             </button>

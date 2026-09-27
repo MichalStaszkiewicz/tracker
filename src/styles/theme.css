@@ -348,7 +348,16 @@ button { font-family: var(--font-body); }
 .filterbar__searchbox input::placeholder { color: var(--color-neutral-500); }
 
 /* --- Session widget --- */
-.session { position: absolute; right: 22px; bottom: 22px; width: 236px; border-radius: 12px; background: var(--color-surface); box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-accent-800); overflow: hidden; }
+/* Dok sesji: zawsze w prawym dolnym rogu obszaru treści, nad każdym ekranem. */
+.sessiondock { position: absolute; right: 22px; bottom: 22px; z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.session { width: 236px; border-radius: 12px; background: var(--color-surface); box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-accent-800); overflow: hidden; }
+.session--paused { box-shadow: 0 24px 48px -18px #000, inset 0 0 0 1px var(--color-neutral-800); }
+.session--paused .session__time { color: var(--color-neutral-500); }
+.picker { width: 280px; border-radius: 10px; background: var(--color-surface); box-shadow: 0 20px 40px -16px #000, inset 0 0 0 1px var(--color-neutral-800); padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.picker__list { display: flex; flex-direction: column; gap: 1px; max-height: 280px; overflow-y: auto; }
+.picker__item--hi { background: color-mix(in srgb, var(--color-text) 6%, transparent); color: var(--color-text); }
+.picker__empty { padding: 10px; text-align: center; font: 400 11px var(--mono); color: var(--color-neutral-500); }
+.iconbtn--active { background: color-mix(in srgb, var(--color-text) 6%, transparent); color: var(--color-text); }
 .session__bar { height: 26px; display: flex; align-items: center; gap: 9px; padding: 0 10px; background: var(--hair) no-repeat bottom / 100% 1px; }
 .session__label { font: 500 9.5px var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-neutral-500); }
 .session__body { padding: 13px; display: flex; flex-direction: column; gap: 10px; }
