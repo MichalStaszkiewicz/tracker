@@ -250,3 +250,82 @@ export interface TaskListItem {
   secondsSpent: number
   activeSession: { startedAt: string } | null
 }
+
+// --- Kopia zapasowa (eksport / przywracanie wszystkich danych) ---
+
+export type BackupKind = 'manual' | 'pre-import'
+/** Skąd pochodzi plik: nasz eksport, kopia stanu sprzed przywracania albo surowy plik bazy (np. kopia startowa). */
+export type BackupOrigin = 'export' | 'pre-import' | 'raw'
+export type BackupErrorCode =
+  | 'busy'
+  | 'is-live-db'
+  | 'too-large'
+  | 'read-failed'
+  | 'not-sqlite'
+  | 'corrupt'
+  | 'not-tracker'
+  | 'too-new'
+  | 'unknown-schema'
+  | 'migration-failed'
+  | 'broken-references'
+  | 'invalid-json'
+  | 'no-entry-types'
+  | 'no-space'
+  | 'no-access'
+  | 'write-failed'
+  | 'expired'
+  | 'snapshot-failed'
+  | 'restore-failed'
+export interface BackupFailure {
+  status: 'error'
+  code: BackupErrorCode
+  /** Krótki, bezpieczny detal (liczba, `tabela.kolumna`, wersja) — nigdy SQL ani ścieżki systemowe. */
+  detail?: string
+}
+/** Teksty natywnych okien dialogowych — proces główny nie ma t(). */
+export interface BackupDialogText {
+  title: string
+  buttonLabel: string
+  filterName: string
+  allFilesName: string
+}
+export interface LastExport {
+  at: string
+  path: string
+}
+export interface RestoreNotice {
+  restoredAt: string
+  fileName: string
+  origin: BackupOrigin
+  takenAt: string
+  snapshotFileName: string
+  backupsDir: string
+}
+export interface BackupStatus {
+  lastExport: LastExport | null
+  lastRestore: RestoreNotice | null
+}
+export interface BackupTableCount {
+  table: string
+  current: number
+  incoming: number
+}
+export interface RestorePreview {
+  token: string
+  fileName: string
+  origin: BackupOrigin
+  /** ISO: exportedAt z metadanych, a dla surowego pliku jego mtime. */
+  takenAt: string
+  /** Z metadanych; null dla surowego pliku. */
+  appVersion: string | null
+  pendingMigrations: number
+  /** Niezakończone sesje w pliku — staging zamknął je na takenAt. */
+  closedOpenSessions: number
+  /** Trwające teraz sesje w bazie na żywo (zostaną zastąpione). */
+  liveOpenSessions: number
+  /** Każda tabela danych, posortowana po nazwie. */
+  tables: BackupTableCount[]
+}
+export type BackupExportResult = { status: 'canceled' } | { status: 'saved'; export: LastExport } | BackupFailure
+export type BackupPickResult = { status: 'canceled' } | { status: 'ready'; preview: RestorePreview } | BackupFailure
+export type BackupRestoreResult = { status: 'restored'; notice: RestoreNotice } | BackupFailure
