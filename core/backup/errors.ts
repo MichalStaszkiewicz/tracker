@@ -2,11 +2,13 @@ import type { BackupErrorCode, BackupFailure } from '@shared/types'
 
 /** Typowany błąd kopii zapasowej — kod trafia do UI, detal jest krótki i bezpieczny. */
 export class BackupError extends Error {
+  /** `cause` = pierwotny błąd (SQLite/fs) — tylko do logu procesu głównego, nigdy do UI. */
   constructor(
     readonly code: BackupErrorCode,
-    readonly detail?: string
+    readonly detail?: string,
+    options?: ErrorOptions
   ) {
-    super(detail ? `${code}: ${detail}` : code)
+    super(detail ? `${code}: ${detail}` : code, options)
     this.name = 'BackupError'
   }
 }
