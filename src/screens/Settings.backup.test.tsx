@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from '@/i18n'
+import { STARTUP_BACKUPS_KEEP } from '@shared/backup'
 import { DEFAULT_SETTINGS } from '@shared/settings'
 import { resolveShortcuts } from '@shared/shortcuts'
 import type {
@@ -72,6 +73,11 @@ const mount = () =>
   )
 
 describe('Ustawienia — kopia zapasowa', () => {
+  it('opis kopii startowej podaje, ile najnowszych kopii zostaje', () => {
+    mount()
+    expect(screen.getByText(`Automatyczna kopia bazy przy każdym uruchomieniu (folder backups, zostaje ${STARTUP_BACKUPS_KEEP} najnowszych).`)).toBeTruthy()
+  })
+
   it('martwe przyciski CSV/JSON zniknęły; są Eksportuj… i Wybierz plik…', () => {
     mount()
     expect(screen.queryByRole('button', { name: 'CSV' })).toBeNull()
