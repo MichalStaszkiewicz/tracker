@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '@/api'
+import { BackupRestoreModal } from '@/components/BackupRestoreModal'
 import { Icon } from '@/components/Icon'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { SettingsRow } from '@/components/SettingsRow'
@@ -8,8 +9,11 @@ import { SettingsSubNav } from '@/components/SettingsSubNav'
 import { ShortcutRow } from '@/components/ShortcutRow'
 import { Stepper } from '@/components/Stepper'
 import { Toggle } from '@/components/Toggle'
+import { useBackup } from '@/hooks/useBackup'
 import { useT } from '@/i18n'
 import type { StringKey } from '@/i18n/strings'
+import { errorText, exportDesc, sessionWillEnd } from '@/lib/backup-view'
+import { useSessionCtx } from '@/session-context'
 import { useSettingsCtx } from '@/settings-context'
 import { SHORTCUT_ACTIONS, type ShortcutAction } from '@shared/shortcuts'
 
@@ -31,8 +35,10 @@ const SCREEN_NAV: Record<string, StringKey> = {
 }
 
 export function Settings() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const { settings, set, shortcuts } = useSettingsCtx()
+  const session = useSessionCtx()
+  const backup = useBackup()
   const [current, setCurrent] = useState('appearance')
   const [dbPath, setDbPath] = useState('')
 
@@ -187,11 +193,26 @@ export function Settings() {
             <SettingsRow title={t('set.backup')} desc={t('set.backup.desc')}>
               <Toggle checked={settings.backup} onChange={(v) => set('backup', v)} />
             </SettingsRow>
-            <SettingsRow title={t('set.export')} desc={t('set.export.desc')} last>
-              <div className="setrow__btns">
-                <button className="btn btn--outline">CSV</button>
-                <button className="btn btn--outline">JSON</button>
-              </div>
+            <SettingsRow
+              title={t('set.backupExport')}
+              tone={backup.exportFailure ? 'error' : undefined}
+              desc={backup.exportFailure ? errorText(backup.exportFailure, t) : exportDesc(backup.lastExport, t, lang)}
+            >
+              <button className="btn btn--outline" disabled={backup.busy} onClick={() => void backup.exportNow()}>
+                <Icon name="download-simple" size={14} />
+                {t('set.backupExport.btn')}
+              </button>
+            </SettingsRow>
+            <SettingsRow
+              title={t('set.backupImport')}
+              tone={backup.pickFailure ? 'error' : undefined}
+              desc={backup.pickFailure ? errorText(backup.pickFailure, t) : t('set.backupImport.desc')}
+              last
+            >
+              <button className="btn btn--outline" disabled={backup.busy} onClick={() => void backup.pickRestore()}>
+                <Icon name="clock-counter-clockwise" size={14} />
+                {t('set.backupImport.btn')}
+              </button>
             </SettingsRow>
           </SettingsSection>
 
@@ -215,6 +236,15 @@ export function Settings() {
           </SettingsSection>
         </div>
       </div>
+
+      {backup.flow.phase !== 'idle' && (
+        <BackupRestoreModal
+          flow={backup.flow}
+          sessionWillEnd={sessionWillEnd(backup.flow.preview, session.paused != null)}
+          onConfirm={() => void backup.confirmRestore()}
+          onCancel={backup.cancel}
+        />
+      )}
     </div>
   )
 }
