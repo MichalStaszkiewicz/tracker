@@ -3,10 +3,13 @@ import { api } from '@/api'
 import { AppShell } from '@/components/AppShell'
 import { AreaPopover } from '@/components/AreaPopover'
 import { CommandPalette, type PaletteAction } from '@/components/CommandPalette'
+import { Notice } from '@/components/Notice'
 import { SessionWidget } from '@/components/SessionWidget'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
 import { useHotkeys } from '@/hooks/useHotkeys'
+import { useRestoreNotice } from '@/hooks/useRestoreNotice'
+import { formatDateTime } from '@/lib/format'
 import { isModalLocked } from '@/lib/modal-lock'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useSessionCtx } from '@/session-context'
@@ -23,7 +26,8 @@ import { Stats } from '@/screens/Stats'
 import { Tasks } from '@/screens/Tasks'
 
 export function App() {
-  const { t } = useT()
+  const { t, lang } = useT()
+  const restore = useRestoreNotice()
   const [screen, setScreen] = useState<NavKey>('tasks')
   const [taskArea, setTaskArea] = useState<{ id: number; name: string } | null>(null)
   const [openEntryId, setOpenEntryId] = useState<number | null>(null)
@@ -140,6 +144,20 @@ export function App() {
         onAreaDrop={dropTaskToArea}
         onOpenPalette={() => setPaletteOpen(true)}
         dock={sessionVisible}
+        banner={
+          restore.notice && (
+            <Notice
+              icon="check-circle"
+              title={t('bk.done', { date: formatDateTime(restore.notice.takenAt, lang) })}
+              body={t('bk.done.hint', { file: restore.notice.snapshotFileName })}
+              actions={[
+                { key: 'open', label: t('bk.done.open'), onClick: () => api.system.openPath(restore.notice?.backupsDir ?? '') }
+              ]}
+              onDismiss={restore.dismiss}
+              dismissLabel={t('bk.close')}
+            />
+          )
+        }
       >
         {content}
         {sessionVisible && (
