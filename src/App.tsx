@@ -7,6 +7,7 @@ import { SessionWidget } from '@/components/SessionWidget'
 import type { NavKey } from '@/components/Sidebar'
 import { useAreas } from '@/hooks/useAreas'
 import { useHotkeys } from '@/hooks/useHotkeys'
+import { isModalLocked } from '@/lib/modal-lock'
 import { requestQuickAddFocus } from '@/lib/quick-add-focus'
 import { useSessionCtx } from '@/session-context'
 import { useSettingsCtx } from '@/settings-context'
@@ -76,8 +77,14 @@ export function App() {
     'ctrl+arrowup': focusAdd
   })
 
-  // Ctrl+K przychodzi z procesu głównego (before-input-event) — pewne w Electronie.
-  useEffect(() => api.system.onPaletteToggle(() => setPaletteOpen((o) => !o)), [])
+  // Ctrl+K przychodzi z procesu głównego (before-input-event) — pewne w Electronie; pod modalem nieaktywny.
+  useEffect(
+    () =>
+      api.system.onPaletteToggle(() => {
+        if (!isModalLocked()) setPaletteOpen((o) => !o)
+      }),
+    []
+  )
 
   const NAV_ICON: Record<NavKey, string> = {
     tasks: 'check-square',
