@@ -103,6 +103,11 @@ export function stopSession(db: DB, now: Date = new Date()): void {
   closeOpen(db, now)
 }
 
+/** Liczba odcinków bez końca (kopia z innej bazy może mieć ich więcej niż jeden). */
+export function openSessionCount(db: DB): number {
+  return db.select({ id: sessions.id }).from(sessions).where(isNull(sessions.endedAt)).all().length
+}
+
 /** Pauza: zamyka trwający odcinek i zwraca podsumowanie sesji do wznowienia (null, gdy nic nie trwa). */
 export function pauseSession(db: DB, now: Date = new Date()): PausedSession | null {
   const open = openRow(db)

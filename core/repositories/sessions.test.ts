@@ -7,6 +7,7 @@ import { seedDemo } from '../db/seed'
 import { listTasks } from './entries'
 import {
   activeSession,
+  openSessionCount,
   pauseSession,
   resumeSession,
   sessionGroup,
@@ -168,5 +169,18 @@ describe('statystyki liczą sesje, nie odcinki', () => {
     const base = getStats(seedOnly.db, 'week', T3)
     expect(before.sessionCount - base.sessionCount).toBe(1)
     expect(before.periodMinutes - base.periodMinutes).toBe(18)
+  })
+})
+
+describe('openSessionCount', () => {
+  it('liczy tylko odcinki bez ended_at', () => {
+    expect(openSessionCount(conn.db)).toBe(0)
+    startSession(conn.db, iat, T0)
+    expect(openSessionCount(conn.db)).toBe(1)
+    // surowa kopia z innej bazy może mieć kilka otwartych odcinków naraz
+    conn.db.insert(sessions).values({ entryId: rfc, startedAt: T1.toISOString(), endedAt: null, note: null }).run()
+    expect(openSessionCount(conn.db)).toBe(2)
+    stopSession(conn.db, T2)
+    expect(openSessionCount(conn.db)).toBe(0)
   })
 })
