@@ -56,7 +56,7 @@ export function getDbPaths(): DbPaths {
   return paths
 }
 
-/** Zamknięcie przy wyjściu: checkpoint WAL, więc kopia startowa (sam plik główny) ma pełny stan. */
+/** Zamknięcie przy wyjściu: checkpoint WAL, więc sam plik główny ma pełny stan. */
 export function closeDb(): void {
   conn?.sqlite.close()
   conn = null
