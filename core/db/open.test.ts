@@ -1,8 +1,8 @@
-import { copyFileSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { startupBackupFileName } from '@shared/backup'
+import { STARTUP_BACKUPS_KEEP, snapshotFileName, startupBackupFileName } from '@shared/backup'
 import { BackupError } from '../backup/errors'
 import { stageBackup } from '../backup/service'
 import { readMigrationLevels } from '../repositories/backup'
@@ -133,5 +133,34 @@ describe('openAppDb — spójność kopii startowej', () => {
     // zamknięte połączenie → plik da się usunąć (Windows), a poziom schematu się nie zmienił
     const after = reopen(dbPath)
     expect(readMigrationLevels(after.sqlite)).toEqual(migrationLevels(MIGRATIONS_FOLDER).slice(0, 1))
+  })
+})
+
+describe('openAppDb — retencja kopii startowych', () => {
+  const at = (i: number): Date => new Date(NOW.getTime() - (i + 1) * 60_000)
+
+  it(`zostaje ${STARTUP_BACKUPS_KEEP} najnowszych kopii startowych; kopie sprzed przywrócenia i obce pliki nietknięte`, () => {
+    existingDb()
+    mkdirSync(backupsDir)
+    const old = Array.from({ length: STARTUP_BACKUPS_KEEP + 3 }, (_, i) => startupBackupFileName('tracker.sqlite', at(i)))
+    const others = [
+      snapshotFileName('tracker.sqlite', at(99)),
+      startupBackupFileName('dev.sqlite', at(98)),
+      `${startupBackupFileName('tracker.sqlite', at(97))}.partial`,
+      'notatka.txt'
+    ]
+    for (const name of [...old, ...others]) writeFileSync(join(backupsDir, name), '')
+    start()
+    const kept = [startupBackupFileName('tracker.sqlite', NOW), ...old.slice(0, STARTUP_BACKUPS_KEEP - 1)]
+    expect(baks()).toEqual([...kept, ...others].sort())
+  })
+
+  it('backup = false → stare kopie zostają (retencja tylko po nowej kopii)', () => {
+    existingDb({ backup: false })
+    mkdirSync(backupsDir)
+    const old = Array.from({ length: STARTUP_BACKUPS_KEEP + 3 }, (_, i) => startupBackupFileName('tracker.sqlite', at(i)))
+    for (const name of old) writeFileSync(join(backupsDir, name), '')
+    start()
+    expect(baks()).toEqual([...old].sort())
   })
 })
