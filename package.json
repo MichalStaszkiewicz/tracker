@@ -14,7 +14,7 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "release": "electron-vite build && electron-builder --win",
+    "release": "electron-vite build && electron-builder --win --publish never",
     "release:dir": "electron-vite build && electron-builder --win --dir"
   },
   "build": {
