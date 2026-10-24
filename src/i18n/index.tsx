@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import { strings, type Lang, type StringKey } from './strings'
 
 type Vars = Record<string, string | number>
-type TFn = (key: StringKey, vars?: Vars) => string
+export type TFn = (key: StringKey, vars?: Vars) => string
 
 interface I18nCtx {
   lang: Lang

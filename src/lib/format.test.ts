@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { daysUntil, formatDuration, formatStopwatch, shortDate } from './format'
+import { daysUntil, formatDateTime, formatDuration, formatStopwatch, shortDate } from './format'
 
 describe('formatDuration', () => {
   it.each([
@@ -30,5 +30,18 @@ describe('daysUntil / shortDate', () => {
   })
   it('shortDate formatuje DD.MM', () => {
     expect(shortDate('2026-09-18')).toBe('18.09')
+  })
+})
+
+describe('formatDateTime', () => {
+  it('pl i en w lokalnej strefie: rok i godzina', () => {
+    const iso = new Date(2026, 9, 21, 14, 3).toISOString()
+    const pl = formatDateTime(iso, 'pl')
+    const en = formatDateTime(iso, 'en')
+    expect(pl).toContain('2026')
+    expect(pl).toContain('14:03')
+    expect(en).toContain('2026')
+    expect(en).toContain('14:03')
+    expect(pl).not.toBe(en)
   })
 })

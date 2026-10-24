@@ -1,12 +1,22 @@
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { app } from 'electron'
-import { createDb, type DB } from '@core/db/connection'
-import { backupDbFile, runMigrations } from '@core/db/migrate'
-import { seed } from '@core/db/seed'
+import type { Connection, DB } from '@core/db/connection'
+import { openAppDb } from '@core/db/open'
 
-let db: DB | null = null
-let paths: { dbPath: string; dbDir: string } | null = null
+export interface DbPaths {
+  dbPath: string
+  dbDir: string
+  backupsDir: string
+  /** Prywatne kopie robocze plików do przywrócenia (sprzątane przy starcie). */
+  stagingDir: string
+  /** Stan ostatniego eksportu — poza bazą, więc przywrócenie kopii go nie cofa. */
+  statePath: string
+  migrationsFolder: string
+}
+
+let conn: Connection | null = null
+let paths: DbPaths | null = null
 
 /** Inicjalizuje bazę: backup pliku → migracje → seed. Wiring Electron ↔ core. */
 export function initDb(): DB {
@@ -15,26 +25,39 @@ export function initDb(): DB {
   mkdirSync(dbDir, { recursive: true })
 
   const dbPath = join(dbDir, dev ? 'dev.sqlite' : 'tracker.sqlite')
-  paths = { dbPath, dbDir }
   const migrationsFolder = dev
     ? join(process.cwd(), 'core', 'db', 'migrations')
     : join(process.resourcesPath, 'migrations')
   const backupsDir = join(dbDir, 'backups')
+  paths = {
+    dbPath,
+    dbDir,
+    backupsDir,
+    stagingDir: join(backupsDir, '.staging'),
+    statePath: join(dbDir, 'backup-state.json'),
+    migrationsFolder
+  }
 
-  backupDbFile(dbPath, backupsDir)
-  const conn = createDb(dbPath)
-  runMigrations(conn.db, migrationsFolder)
-  seed(conn.db)
-  db = conn.db
-  return db
+  conn = openAppDb({ dbPath, backupsDir, migrationsFolder })
+  return conn.db
+}
+
+export function getConnection(): Connection {
+  if (!conn) throw new Error('DB nie została zainicjalizowana')
+  return conn
 }
 
 export function getDb(): DB {
-  if (!db) throw new Error('DB nie została zainicjalizowana')
-  return db
+  return getConnection().db
 }
 
-export function getDbPaths(): { dbPath: string; dbDir: string } {
+export function getDbPaths(): DbPaths {
   if (!paths) throw new Error('DB nie została zainicjalizowana')
   return paths
+}
+
+/** Zamknięcie przy wyjściu: checkpoint WAL, więc sam plik główny ma pełny stan. */
+export function closeDb(): void {
+  conn?.sqlite.close()
+  conn = null
 }

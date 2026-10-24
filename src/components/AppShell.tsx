@@ -14,6 +14,8 @@ interface Props {
   onOpenPalette: () => void
   /** Widoczny dok sesji — ekrany rezerwują pod nim miejsce (nic nie znika pod widżetem). */
   dock?: boolean
+  /** Baner nad treścią ekranu (np. komunikat po przywróceniu kopii). */
+  banner?: ReactNode
   children: ReactNode
 }
 
@@ -27,6 +29,7 @@ export function AppShell({
   onAreaDrop,
   onOpenPalette,
   dock,
+  banner,
   children
 }: Props) {
   return (
@@ -43,6 +46,7 @@ export function AppShell({
           onAreaDrop={onAreaDrop}
         />
         <main className={dock ? 'main--dock' : undefined} style={{ position: 'relative', minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {banner}
           {children}
         </main>
       </div>

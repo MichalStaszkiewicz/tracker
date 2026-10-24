@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
 import {
   ArrowElbowUpLeft, ArrowLeft, ArrowsLeftRight, ArrowUpRight, Books, Briefcase, CalendarBlank, CaretDown, CaretRight,
-  ChartBar, Check, CheckCircle, CheckSquare, Columns, Cube, DiscordLogo, EnvelopeSimple,
+  ChartBar, Check, CheckCircle, CheckSquare, ClockCounterClockwise, Columns, Cube, DiscordLogo, DownloadSimple, EnvelopeSimple,
   Flame, FolderOpen, Funnel, Gear, GithubLogo, Globe, Hash, HourglassMedium, LinkedinLogo,
   LinkSimple, LockKey, MagnifyingGlass, MapPin, Minus, Note, Notebook, Pause, PencilSimple,
   Play, Plus, Square, Target, TerminalWindow, Timer, Trash, Tray, User, WarningCircle, X,
@@ -55,7 +55,9 @@ const MAP: Record<string, ComponentType<IconProps>> = {
   flame: Flame,
   hourglass: HourglassMedium,
   notebook: Notebook,
-  calendar: CalendarBlank
+  calendar: CalendarBlank,
+  'download-simple': DownloadSimple,
+  'clock-counter-clockwise': ClockCounterClockwise
 }
 
 export function Icon({ name, size = 15 }: { name: string; size?: number }) {

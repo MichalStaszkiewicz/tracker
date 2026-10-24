@@ -58,6 +58,14 @@ const api: TrackerApi = {
     commit: (offers) => ipcRenderer.invoke(IPC.offersCommit, offers),
     scrape: (source, criteria) => ipcRenderer.invoke(IPC.offersScrape, source, criteria)
   },
+  backup: {
+    status: () => ipcRenderer.invoke(IPC.backupStatus),
+    export: (text) => ipcRenderer.invoke(IPC.backupExport, text),
+    pick: (text) => ipcRenderer.invoke(IPC.backupPick, text),
+    restore: (token) => ipcRenderer.invoke(IPC.backupRestore, token),
+    discard: (token) => ipcRenderer.send(IPC.backupDiscard, token),
+    dismissNotice: () => ipcRenderer.send(IPC.backupDismissNotice)
+  },
   settings: {
     getAll: () => ipcRenderer.invoke(IPC.settingsGetAll),
     set: (key, value) => ipcRenderer.invoke(IPC.settingsSet, key, value)

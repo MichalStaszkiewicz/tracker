@@ -44,6 +44,7 @@ import { fetchJustJoinOffers } from '@core/scraper/justjoin'
 import { DEFAULT_JUSTJOIN_CRITERIA } from '@shared/scrapers/justjoin'
 import { getAllSettings, setSetting } from '@core/repositories/settings'
 import { getDb, getDbPaths } from '../db'
+import { registerBackupIpc } from './backup'
 
 // Deduplikacja równoległych żądań scrapowania (np. podwójny efekt Reacta w StrictMode) —
 // to samo źródło+kryteria zwraca ten sam bieg zamiast odpalać drugi komplet zapytań do serwisu.
@@ -134,4 +135,6 @@ export function registerIpc(): void {
     else w.maximize()
   })
   ipcMain.on(IPC.windowClose, (e) => BrowserWindow.fromWebContents(e.sender)?.close())
+
+  registerBackupIpc()
 }

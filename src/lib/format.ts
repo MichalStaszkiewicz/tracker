@@ -1,5 +1,7 @@
 /** Czyste formatowanie do wyświetlenia. Bez React, bez bazy. */
 
+import type { Lang } from '@shared/types'
+
 /** 9600 → "2h 40m", 3000 → "50m" */
 export function formatDuration(seconds: number): string {
   const total = Math.max(0, Math.floor(seconds / 60))
@@ -36,4 +38,11 @@ export function shortDate(dateKey: string): string {
 /** Sekundy od znacznika ISO do teraz. */
 export function secondsSince(iso: string, now: Date = new Date()): number {
   return Math.max(0, Math.floor((now.getTime() - Date.parse(iso)) / 1000))
+}
+
+/** Data i godzina do wyświetlenia (np. "21 paź 2026, 14:03"), w strefie lokalnej. */
+export function formatDateTime(iso: string, lang: Lang): string {
+  return new Intl.DateTimeFormat(lang === 'pl' ? 'pl-PL' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(
+    new Date(iso)
+  )
 }

@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, shell } from 'electron'
 import { IPC } from '@shared/ipc'
-import { initDb } from './db'
+import { closeDb, initDb } from './db'
 import { registerIpc } from './ipc'
 
 function createWindow(): void {
@@ -64,3 +64,5 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
+
+app.on('will-quit', closeDb)

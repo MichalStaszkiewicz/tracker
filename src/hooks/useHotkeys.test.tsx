@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { acquireModalLock } from '@/lib/modal-lock'
 import { useHotkeys } from './useHotkeys'
 
 function Harness({ fn }: { fn: () => void }) {
@@ -21,5 +22,15 @@ describe('useHotkeys', () => {
     render(<Harness fn={fn} />)
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', bubbles: true }))
     expect(fn).not.toHaveBeenCalled()
+  })
+  it('nie wywołuje skrótów, gdy otwarty jest modal (modal-lock)', () => {
+    const fn = vi.fn()
+    render(<Harness fn={fn} />)
+    const release = acquireModalLock()
+    window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'k', bubbles: true }))
+    expect(fn).not.toHaveBeenCalled()
+    release()
+    window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'k', bubbles: true }))
+    expect(fn).toHaveBeenCalledTimes(1)
   })
 })

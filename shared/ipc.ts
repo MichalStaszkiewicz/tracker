@@ -3,6 +3,11 @@
 
 import type {
   Area,
+  BackupDialogText,
+  BackupExportResult,
+  BackupPickResult,
+  BackupRestoreResult,
+  BackupStatus,
   BoardView,
   EntryDetail,
   EntryPatch,
@@ -69,6 +74,13 @@ export const IPC = {
   offersPreview: 'offers:preview',
   offersCommit: 'offers:commit',
   offersScrape: 'offers:scrape',
+
+  backupStatus: 'backup:status',
+  backupExport: 'backup:export',
+  backupPick: 'backup:pick',
+  backupRestore: 'backup:restore',
+  backupDiscard: 'backup:discard',
+  backupDismissNotice: 'backup:dismissNotice',
 
   settingsGetAll: 'settings:getAll',
   settingsSet: 'settings:set',
@@ -141,6 +153,17 @@ export interface TrackerApi {
     commit(offers: ImportOffer[]): Promise<{ imported: number }>
     /** Pobiera oferty ze źródła (fetch + parse) i zwraca podgląd importu (dedup po URL). */
     scrape(source: ScrapeSource, criteria?: ScrapeCriteria): Promise<ImportPreview>
+  }
+  backup: {
+    status(): Promise<BackupStatus>
+    /** Okno zapisu → eksport wszystkich danych do jednego pliku. */
+    export(text: BackupDialogText): Promise<BackupExportResult>
+    /** Okno otwierania → kopia robocza, walidacja i podgląd. Dane jeszcze się nie zmieniają. */
+    pick(text: BackupDialogText): Promise<BackupPickResult>
+    /** Zastępuje wszystkie dane przygotowaną kopią (token z pick). Po sukcesie renderer się przeładowuje. */
+    restore(token: string): Promise<BackupRestoreResult>
+    discard(token: string): void
+    dismissNotice(): void
   }
   settings: {
     getAll(): Promise<Record<string, unknown>>

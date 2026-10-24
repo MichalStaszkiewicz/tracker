@@ -77,23 +77,26 @@ function dateKey(d: Date): string {
 export function seed(db: DB): void {
   if (db.select().from(entryTypes).all().length > 0) return
 
-  STARTER_TYPES.forEach((t, i) => {
-    const inserted = db
-      .insert(entryTypes)
-      .values({
-        key: t.key, name: t.name, icon: t.icon, fields: t.fields ?? [],
-        progressMode: t.progressMode, autoRetro: t.autoRetro ?? false,
-        showOnBoard: t.showOnBoard ?? false, template: t.template ?? [], position: i
+  // Atomowo; istniejące ustawienia (np. po przywróceniu kopii bez typów) zostają nietknięte.
+  db.transaction((tx) => {
+    STARTER_TYPES.forEach((t, i) => {
+      const inserted = tx
+        .insert(entryTypes)
+        .values({
+          key: t.key, name: t.name, icon: t.icon, fields: t.fields ?? [],
+          progressMode: t.progressMode, autoRetro: t.autoRetro ?? false,
+          showOnBoard: t.showOnBoard ?? false, template: t.template ?? [], position: i
+        })
+        .returning({ id: entryTypes.id })
+        .get()
+      t.stages.forEach((s, si) => {
+        tx.insert(stages).values({ typeId: inserted.id, name: s.name, position: si, isDone: s.isDone ?? false }).run()
       })
-      .returning({ id: entryTypes.id })
-      .get()
-    t.stages.forEach((s, si) => {
-      db.insert(stages).values({ typeId: inserted.id, name: s.name, position: si, isDone: s.isDone ?? false }).run()
     })
-  })
 
-  db.insert(settings).values({ key: 'language', value: 'pl' }).run()
-  db.insert(settings).values({ key: 'streakThresholdMinutes', value: 25 }).run()
+    tx.insert(settings).values({ key: 'language', value: 'pl' }).onConflictDoNothing().run()
+    tx.insert(settings).values({ key: 'streakThresholdMinutes', value: 25 }).onConflictDoNothing().run()
+  })
 }
 
 /** Dane demo (obszary, wpisy, oferty, sesje) — TYLKO do testów/podglądu, NIE do produkcji. Idempotentne. */
