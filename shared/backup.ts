@@ -16,9 +16,32 @@ export function backupFileName(now: Date): string {
   return `tracker-backup-${date}-${time}.${BACKUP_EXPORT_EXTENSION}`
 }
 
-/** `<baza>.pre-import.<znacznik>.bak` — ten sam styl znacznika co kopie startowe (backupDbFile). */
+/** Znacznik ISO (UTC) bez ':' i '.' — sortuje się alfabetycznie tak samo jak chronologicznie. */
+const stamp = (now: Date): string => now.toISOString().replace(/[:.]/g, '-')
+const STAMP_PATTERN = String.raw`\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z`
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/** Ile najnowszych kopii startowych zostaje w folderze backups. */
+export const STARTUP_BACKUPS_KEEP = 20
+
+/** `<baza>.<znacznik>.bak` — kopia przy starcie, przed migracjami. Przywracanie czyta ją jako surowe źródło. */
+export function startupBackupFileName(dbBase: string, now: Date): string {
+  return `${dbBase}.${stamp(now)}.bak`
+}
+
+/** `<baza>.pre-import.<znacznik>.bak` — ten sam styl znacznika co kopie startowe. */
 export function snapshotFileName(dbBase: string, now: Date): string {
-  return `${dbBase}.pre-import.${now.toISOString().replace(/[:.]/g, '-')}.bak`
+  return `${dbBase}.pre-import.${stamp(now)}.bak`
+}
+
+/** Kopie startowe `dbBase` poza `keep` najnowszymi; inne pliki (np. kopie sprzed przywrócenia) nigdy. */
+export function staleStartupBackups(names: readonly string[], dbBase: string, keep: number): string[] {
+  const startup = new RegExp(String.raw`^${escapeRegExp(dbBase)}\.${STAMP_PATTERN}\.bak$`)
+  return names
+    .filter((name) => startup.test(name))
+    .sort()
+    .reverse()
+    .slice(Math.max(0, keep))
 }
 
 export type SchemaPlan =

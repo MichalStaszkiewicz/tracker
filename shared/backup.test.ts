@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { backupFileName, planSchemaLevel, snapshotFileName } from './backup'
+import { backupFileName, planSchemaLevel, snapshotFileName, staleStartupBackups, startupBackupFileName } from './backup'
 
 describe('backupFileName', () => {
   it('lokalny czas, zera wiodące, bez znaków zabronionych w Windows', () => {
@@ -15,6 +15,44 @@ describe('snapshotFileName', () => {
     const name = snapshotFileName('tracker.sqlite', new Date('2026-10-21T12:03:12.345Z'))
     expect(name).toBe('tracker.sqlite.pre-import.2026-10-21T12-03-12-345Z.bak')
     expect(name).not.toMatch(/[<>:"/\\|?*]/)
+  })
+})
+
+describe('startupBackupFileName', () => {
+  it('<baza>.<znacznik ISO>.bak bez znaków zabronionych w Windows', () => {
+    const name = startupBackupFileName('tracker.sqlite', new Date('2026-10-21T12:03:12.345Z'))
+    expect(name).toBe('tracker.sqlite.2026-10-21T12-03-12-345Z.bak')
+    expect(name).not.toMatch(/[<>:"/\\|?*]/)
+  })
+})
+
+describe('staleStartupBackups', () => {
+  const at = (iso: string): string => startupBackupFileName('tracker.sqlite', new Date(iso))
+  const a = at('2026-09-30T23:59:59.999Z')
+  const b = at('2026-10-01T00:00:00.000Z')
+  const c = at('2026-10-21T08:00:00.000Z')
+
+  it('zwraca najstarsze ponad keep (kolejność wejścia bez znaczenia)', () => {
+    expect(staleStartupBackups([c, a, b], 'tracker.sqlite', 2)).toEqual([a])
+    expect(staleStartupBackups([b, c, a], 'tracker.sqlite', 1)).toEqual([b, a])
+  })
+
+  it('keep ≥ liczba kopii → nic; keep 0 → wszystkie', () => {
+    expect(staleStartupBackups([a, b], 'tracker.sqlite', 2)).toEqual([])
+    expect(staleStartupBackups([a, b], 'tracker.sqlite', 0)).toEqual([b, a])
+  })
+
+  it('pomija kopie sprzed przywrócenia, innej bazy, .partial i obce pliki', () => {
+    const names = [
+      a,
+      snapshotFileName('tracker.sqlite', new Date('2026-01-01T00:00:00.000Z')),
+      startupBackupFileName('dev.sqlite', new Date('2026-01-01T00:00:00.000Z')),
+      startupBackupFileName('trackerXsqlite', new Date('2026-01-01T00:00:00.000Z')),
+      `${b}.partial`,
+      'tracker.sqlite.stara.bak',
+      'notatka.txt'
+    ]
+    expect(staleStartupBackups(names, 'tracker.sqlite', 0)).toEqual([a])
   })
 })
 

@@ -1,9 +1,8 @@
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { app } from 'electron'
-import { createDb, type Connection, type DB } from '@core/db/connection'
-import { backupDbFile, runMigrations } from '@core/db/migrate'
-import { seed } from '@core/db/seed'
+import type { Connection, DB } from '@core/db/connection'
+import { openAppDb } from '@core/db/open'
 
 export interface DbPaths {
   dbPath: string
@@ -39,10 +38,7 @@ export function initDb(): DB {
     migrationsFolder
   }
 
-  backupDbFile(dbPath, backupsDir)
-  conn = createDb(dbPath)
-  runMigrations(conn.db, migrationsFolder)
-  seed(conn.db)
+  conn = openAppDb({ dbPath, backupsDir, migrationsFolder })
   return conn.db
 }
 
@@ -60,7 +56,7 @@ export function getDbPaths(): DbPaths {
   return paths
 }
 
-/** Zamknięcie przy wyjściu: checkpoint WAL, więc kopia startowa (sam plik główny) ma pełny stan. */
+/** Zamknięcie przy wyjściu: checkpoint WAL, więc sam plik główny ma pełny stan. */
 export function closeDb(): void {
   conn?.sqlite.close()
   conn = null

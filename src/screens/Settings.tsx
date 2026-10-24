@@ -15,6 +15,7 @@ import type { StringKey } from '@/i18n/strings'
 import { errorText, exportDesc, sessionWillEnd } from '@/lib/backup-view'
 import { useSessionCtx } from '@/session-context'
 import { useSettingsCtx } from '@/settings-context'
+import { STARTUP_BACKUPS_KEEP } from '@shared/backup'
 import { SHORTCUT_ACTIONS, type ShortcutAction } from '@shared/shortcuts'
 
 const ACCENTS = [
@@ -190,7 +191,7 @@ export function Settings() {
                 {t('set.openFolder')}
               </button>
             </SettingsRow>
-            <SettingsRow title={t('set.backup')} desc={t('set.backup.desc')}>
+            <SettingsRow title={t('set.backup')} desc={t('set.backup.desc', { n: STARTUP_BACKUPS_KEEP })}>
               <Toggle checked={settings.backup} onChange={(v) => set('backup', v)} />
             </SettingsRow>
             <SettingsRow

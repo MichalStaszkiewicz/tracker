@@ -193,7 +193,7 @@ export function replaceAllFrom(sqlite: Database.Database, tables: readonly DataT
     .immediate()
 }
 
-/** Po przywróceniu sam plik główny ma pełny stan (kopie startowe kopiują tylko jego). */
+/** Po przywróceniu sam plik główny ma pełny stan (bez zależności od -wal). */
 export function checkpoint(sqlite: Database.Database): void {
   sqlite.pragma('wal_checkpoint(TRUNCATE)')
 }
